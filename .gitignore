@@ -1,0 +1,30 @@
+# Local Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Large auxiliary datasets and downloaded assets
+data/alfworld/
+*.zip
+*.tar
+*.tar.gz
+*.sqlite
+*.db
+
+# Experiment outputs and generated figures
+results/
+outputs/
+logs/
+*.pdf
+*.png
+*.jpg
+
+# Local secrets and machine-specific files
+.env
+*.env
+.DS_Store
+
