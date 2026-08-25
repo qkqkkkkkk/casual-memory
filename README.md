@@ -21,3 +21,9 @@ Without `--fever-dev`, the built-in controlled FEVER-like benchmark is used;
 it is intended as a fast mechanism sanity check and has no LLM judge.
 
 Outputs are `mismatch_rate.json`, `diversity.json`, `gate_report.md`, `fig1_scatter.pdf`, `fig2_diversity.pdf`, `episode_runs.jsonl`, and the frozen `memory_bank.jsonl`.
+
+If the experiment completed without matplotlib, render the PDFs later without rerunning the experiment:
+
+```bash
+python3 -m p2_probe.render_figures --results-dir results/fever_p2_probe
+```
