@@ -22,6 +22,14 @@ it is intended as a fast mechanism sanity check and has no LLM judge.
 
 Outputs are `mismatch_rate.json`, `diversity.json`, `gate_report.md`, `fig1_scatter.pdf`, `fig2_diversity.pdf`, `episode_runs.jsonl`, and the frozen `memory_bank.jsonl`.
 
+## Real LLM experiment
+
+The controlled simulator above is kept unchanged. The separate
+`p2_probe_llm/` package runs the corresponding experiment with a real
+OpenAI-compatible LLM and resolved FEVER Wikipedia evidence. See
+`p2_probe_llm/README.md` for evidence preparation, memory-bank construction,
+E1 mismatch, and E2 diversity commands.
+
 If the experiment completed without matplotlib, render the PDFs later without rerunning the experiment:
 
 ```bash

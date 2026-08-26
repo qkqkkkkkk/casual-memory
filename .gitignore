@@ -9,6 +9,11 @@ __pycache__/
 
 # Large auxiliary datasets and downloaded assets
 data/alfworld/
+data/fever/wiki-pages/
+data/fever/wiki-pages*.zip
+data/fever/fever_train.jsonl
+data/fever/*_enriched.jsonl
+data/fever/memory_bank.jsonl
 *.zip
 *.tar
 *.tar.gz
@@ -27,4 +32,3 @@ logs/
 .env
 *.env
 .DS_Store
-
