@@ -1,0 +1,18 @@
+[
+  {
+    "condition": "memory_all",
+    "individual_accuracy": 0.7805555555555556,
+    "team_accuracy": 0.7927083333333333,
+    "error_correlation": 0.9338199498500664,
+    "disagreement_rate": 0.036458333333333336,
+    "oracle_accuracy": 0.7927083333333333
+  },
+  {
+    "condition": "placebo_all",
+    "individual_accuracy": 0.7619791666666667,
+    "team_accuracy": 0.8640625,
+    "error_correlation": -0.006173670637433747,
+    "disagreement_rate": 0.5510416666666667,
+    "oracle_accuracy": 0.9864583333333333
+  }
+]
