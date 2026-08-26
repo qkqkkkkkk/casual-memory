@@ -12,6 +12,7 @@ from .client import CachedChat
 from .mas import run_episode
 from .run_experiment import load, placebo, retrieve, select_claims
 from .stats import phi
+from .retrieval import BM25Index
 
 
 def metrics(runs: list[dict], condition: str) -> dict:
@@ -59,6 +60,7 @@ def main() -> None:
     bank_md5 = hashlib.md5(args.memory_bank.read_bytes()).hexdigest()
     config_md5 = hashlib.md5(json.dumps({"model": args.model, "claims": args.claims, "repeats": args.repeats, "top_k": args.top_k, "seed": args.seed, "endpoint": args.endpoint}, sort_keys=True).encode()).hexdigest()
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
+    index = BM25Index(bank)
     log_path = args.output_dir / "diversity_runs.jsonl"
     try:
         log_path.open("x", encoding="utf-8").close()
@@ -66,7 +68,7 @@ def main() -> None:
         raise SystemExit(f"Refusing to overwrite existing log: {log_path}. Use a new --output-dir.") from exc
     placebo_cache = {}; runs = []
     for claim in claims:
-        candidates = {a: retrieve(claim, bank, a, args.top_k) for a in ("A1", "A2", "A3")}
+        candidates = {a: retrieve(claim, bank, a, args.top_k, index) for a in ("A1", "A2", "A3")}
         for item in {x["memory_id"]: x for values in candidates.values() for x in values}.values():
             placebo_cache.setdefault(item["memory_id"], placebo(item, bank))
         placebo_candidates = {a: [placebo_cache[item["memory_id"]] for item in values] for a, values in candidates.items()}
@@ -77,6 +79,7 @@ def main() -> None:
                 handle.write("\n".join(json.dumps(row, ensure_ascii=False) for row in pair) + "\n")
     result = {
         "experiment": "p2_probe_real_llm_diversity", "model": args.model,
+        "retrieval_method": "bm25",
         "n_claims": len(claims), "repeats": args.repeats,
         "memory_bank_md5": bank_md5, "config_md5": config_md5,
         "conditions": [with_cluster_ci(runs, name, args.bootstrap, args.seed) for name in ("memory_all", "placebo_all")],

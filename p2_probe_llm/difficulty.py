@@ -3,7 +3,12 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from .run_experiment import sim
+from .retrieval import tokenize
+
+
+def sim(a: str, b: str) -> float:
+    aa, bb = set(tokenize(a)), set(tokenize(b))
+    return len(aa & bb) / max(1, len(aa | bb))
 
 
 def make_variant(claim: dict[str, Any], bank: list[dict[str, Any]], gold_recall: float, seed: int, max_sentences: int = 5) -> dict[str, Any]:

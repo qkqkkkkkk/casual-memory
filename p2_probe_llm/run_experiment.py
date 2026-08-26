@@ -5,22 +5,22 @@ import argparse
 import hashlib
 import json
 import random
-import re
 from pathlib import Path
 
 from .client import CachedChat
 from .mas import run_episode
 from .stats import bh_reject, cluster_rate_ci, effect, paired_sign_pvalue
-
-
-def sim(a: str, b: str) -> float:
-    aa, bb = set(re.findall(r"[a-z0-9]+", a.lower())), set(re.findall(r"[a-z0-9]+", b.lower()))
-    return len(aa & bb) / max(1, len(aa | bb))
+from .retrieval import BM25Index, role_query, tokenize
 
 
 def load(path: Path, binary: bool = True) -> list[dict]:
     rows = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
     return [x for x in rows if (x.get("label") in {"SUPPORTS", "REFUTES"} if binary else True) and x.get("evidence_bundle")]
+
+
+def lexical_similarity(a: str, b: str) -> float:
+    aa, bb = set(tokenize(a)), set(tokenize(b))
+    return len(aa & bb) / max(1, len(aa | bb))
 
 
 def select_claims(rows: list[dict], n: int, seed: int) -> list[dict]:
@@ -33,31 +33,20 @@ def select_claims(rows: list[dict], n: int, seed: int) -> list[dict]:
     return chosen
 
 
-def retrieve(claim: dict, bank: list[dict], aid: str, k: int) -> list[dict]:
-    claim_text = claim["claim"]
-    evidence_text = " ".join(str(x.get("text", "")) for x in claim.get("evidence_bundle", []))
-
-    def score(item: dict) -> tuple[float, str]:
-        if aid == "A1":
-            memory_evidence = " ".join(str(x.get("text", "")) for x in item.get("evidence_bundle", []))
-            value = sim(claim_text + " " + evidence_text, item["claim"] + " " + memory_evidence)
-        elif aid == "A2":
-            value = sim(claim_text, item["claim"]) + (0.05 if item.get("gold_label") == "REFUTES" else 0.0)
-        else:
-            value = sim(claim_text, item["claim"])
-        return value, str(item["memory_id"])
-
-    return sorted(bank, key=score, reverse=True)[:k]
+def retrieve(claim: dict, bank: list[dict], aid: str, k: int, index: BM25Index | None = None) -> list[dict]:
+    index = index or BM25Index(bank)
+    query, label_bias = role_query(claim, aid)
+    return index.search(query, k=k, label_bias=label_bias)
 
 
 def placebo(item: dict, bank: list[dict]) -> dict:
-    candidates = sorted((x for x in bank if x["memory_id"] != item["memory_id"]), key=lambda x: (sim(item["claim"], x["claim"]), str(x["memory_id"])))
+    candidates = sorted((x for x in bank if x["memory_id"] != item["memory_id"]), key=lambda x: (lexical_similarity(item["claim"], x["claim"]), str(x["memory_id"])))
     dissimilar = candidates[:max(20, len(candidates) // 10)]
     target_len = len(json.dumps(item, ensure_ascii=False).split())
     target = min(dissimilar, key=lambda x: abs(len(json.dumps(x, ensure_ascii=False).split()) - target_len))
     replacement_len = len(json.dumps(target, ensure_ascii=False).split())
     p = dict(target); p["memory_id"] = "placebo-" + item["memory_id"]; p["rationale_digest"] = "Format-matched unrelated precedent."
-    p["placebo_for"] = item["memory_id"]; p["placebo_similarity"] = sim(item["claim"], target["claim"]); p["placebo_token_ratio"] = abs(replacement_len - target_len) / max(1, target_len)
+    p["placebo_for"] = item["memory_id"]; p["placebo_similarity"] = lexical_similarity(item["claim"], target["claim"]); p["placebo_token_ratio"] = abs(replacement_len - target_len) / max(1, target_len)
     return p
 
 
@@ -76,6 +65,7 @@ def main() -> None:
     config_md5 = hashlib.md5(json.dumps({"model": args.model, "claims": args.claims, "repeats": args.repeats, "top_k": args.top_k, "audit_top_n": args.audit_top_n, "seed": args.seed, "endpoint": args.endpoint}, sort_keys=True).encode()).hexdigest()
     placebo_lookup = {}
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
+    index = BM25Index(bank)
     log_path = args.output_dir / "episode_runs.jsonl"
     try:
         log_path.open("x", encoding="utf-8").close()
@@ -83,7 +73,7 @@ def main() -> None:
         raise SystemExit(f"Refusing to overwrite existing log: {log_path}. Use a new --output-dir.") from exc
     all_runs = []; summary = []
     for claim in claims:
-        candidates = {a: retrieve(claim, bank, a, args.top_k) for a in ("A1", "A2", "A3")}
+        candidates = {a: retrieve(claim, bank, a, args.top_k, index) for a in ("A1", "A2", "A3")}
         for item in {x["memory_id"]: x for values in candidates.values() for x in values}.values():
             placebo_lookup.setdefault(item["memory_id"], placebo(item, bank))
         # Start with the most relevant candidate; all retrieved candidates remain logged.
@@ -110,7 +100,7 @@ def main() -> None:
         row["confirmed"] = bool(local_ok and team_ok and ((row["local_b_ci"][0] > 0 and row["team_ci"][1] < 0) or (row["local_b_ci"][1] < 0 and row["team_ci"][0] > 0)))
     mismatches = [x for x in summary if x["confirmed"]]
     rate = len(mismatches) / len(summary) if summary else 0.0
-    result = {"experiment": "p2_probe_real_llm", "benchmark": "FEVER_binary", "model": args.model, "n_claims": len(claims), "n_audit_units": len(summary), "repeats": args.repeats, "fdr_q": 0.1, "mismatch_count": len(mismatches), "mismatch_rate": rate, "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3), "direction_i_count": sum(x["confirmed"] and x["classification"] == "local_positive_team_negative" for x in summary), "direction_ii_count": sum(x["confirmed"] and x["classification"] == "local_negative_team_positive" for x in summary), "undetermined_count": len(summary) - len(mismatches), "cache_hits": client.cache_hits, "llm_calls": client.calls, "memory_bank_md5": bank_md5, "config_md5": config_md5, "units": summary}
+    result = {"experiment": "p2_probe_real_llm", "benchmark": "FEVER_binary", "retrieval_method": "bm25", "model": args.model, "n_claims": len(claims), "n_audit_units": len(summary), "repeats": args.repeats, "fdr_q": 0.1, "mismatch_count": len(mismatches), "mismatch_rate": rate, "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3), "direction_i_count": sum(x["confirmed"] and x["classification"] == "local_positive_team_negative" for x in summary), "direction_ii_count": sum(x["confirmed"] and x["classification"] == "local_negative_team_positive" for x in summary), "undetermined_count": len(summary) - len(mismatches), "cache_hits": client.cache_hits, "llm_calls": client.calls, "memory_bank_md5": bank_md5, "config_md5": config_md5, "units": summary}
     (args.output_dir / "mismatch_rate.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     outputs = [output for run in all_runs for section in ("round1", "round2", "solo") for output in run.get(section, {}).values()]
     parse_rate = sum(bool(x.get("parse_fail")) for x in outputs) / max(1, len(outputs))

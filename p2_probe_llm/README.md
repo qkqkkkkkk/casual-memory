@@ -3,7 +3,9 @@
 This package is intentionally separate from `p2_probe/`. It calls a real
 OpenAI-compatible chat model, scores exact FEVER labels, and never uses an
 LLM judge. `run_experiment.py` implements unilateral E1 interventions;
-`run_diversity.py` implements memory-all versus placebo-all E2.
+`run_diversity.py` implements memory-all versus placebo-all E2. Retrieval is
+now a deterministic, dependency-free BM25 index with fixed role queries;
+placebo diagnostics still use lexical overlap only to verify dissimilarity.
 
 ## 1. Obtain official FEVER resources
 

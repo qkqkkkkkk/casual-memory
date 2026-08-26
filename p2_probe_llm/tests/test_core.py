@@ -8,6 +8,7 @@ from pathlib import Path
 from p2_probe_llm.evidence import enrich_split
 from p2_probe_llm.mas import run_episode
 from p2_probe_llm.stats import bh_reject, effect
+from p2_probe_llm.retrieval import BM25Index
 
 
 class FakeClient:
@@ -48,6 +49,17 @@ class RealProbeTests(unittest.TestCase):
         self.assertEqual(point, .75)
         self.assertEqual(len(interval), 2)
         self.assertEqual(bh_reject([.001, .01, .9], .1), [True, True, False])
+
+    def test_bm25_is_deterministic(self):
+        bank = [
+            {"memory_id": "a", "claim": "Marie Curie won a Nobel Prize", "evidence_bundle": []},
+            {"memory_id": "b", "claim": "Alan Turing worked on computing", "evidence_bundle": []},
+        ]
+        index = BM25Index(bank)
+        first = [x["memory_id"] for x in index.search("Marie Curie Nobel", k=2)]
+        second = [x["memory_id"] for x in index.search("Marie Curie Nobel", k=2)]
+        self.assertEqual(first, second)
+        self.assertEqual(first[0], "a")
 
 
 if __name__ == "__main__":

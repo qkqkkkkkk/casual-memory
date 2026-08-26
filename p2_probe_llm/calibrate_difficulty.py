@@ -9,6 +9,7 @@ from .client import CachedChat
 from .difficulty import make_variant
 from .mas import run_episode
 from .run_experiment import load, placebo, retrieve, select_claims
+from .retrieval import BM25Index
 
 
 def main() -> None:
@@ -22,12 +23,13 @@ def main() -> None:
     test = load(args.test); sampled = select_claims(test, args.claims, args.seed); bank = load(args.memory_bank, binary=False)
     recalls = [float(x) for x in args.gold_recalls.split(",")]
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
+    index = BM25Index(bank)
     placebo_cache = {}; rows = []
     for recall in recalls:
         correct = total = individual_correct = 0
         for claim in sampled:
             variant = make_variant(claim, bank, recall, args.seed)
-            candidates = {aid: retrieve(variant, bank, aid, args.top_k) for aid in ("A1", "A2", "A3")}
+            candidates = {aid: retrieve(variant, bank, aid, args.top_k, index) for aid in ("A1", "A2", "A3")}
             for item in {x["memory_id"]: x for values in candidates.values() for x in values}.values():
                 placebo_cache.setdefault(item["memory_id"], placebo(item, bank))
             candidates = {aid: [placebo_cache[item["memory_id"]] for item in values] for aid, values in candidates.items()}

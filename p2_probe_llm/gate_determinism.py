@@ -8,6 +8,7 @@ from pathlib import Path
 from .client import CachedChat
 from .mas import run_episode
 from .run_experiment import load, retrieve
+from .retrieval import BM25Index
 
 
 def main() -> None:
@@ -17,7 +18,8 @@ def main() -> None:
     report_path = args.output_dir / "g0_report.json"
     if report_path.exists(): raise SystemExit(f"Refusing to overwrite existing report: {report_path}")
     claim = load(args.test)[0]; bank = load(args.memory_bank, binary=False)
-    candidates = {aid: retrieve(claim, bank, aid, args.top_k) for aid in ("A1", "A2", "A3")}
+    index = BM25Index(bank)
+    candidates = {aid: retrieve(claim, bank, aid, args.top_k, index) for aid in ("A1", "A2", "A3")}
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
     first = run_episode(client, claim, candidates, 0, "memory_all")
     second = run_episode(client, claim, candidates, 0, "memory_all")
