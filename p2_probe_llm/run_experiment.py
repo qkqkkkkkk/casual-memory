@@ -39,14 +39,46 @@ def retrieve(claim: dict, bank: list[dict], aid: str, k: int, index: BM25Index |
     return index.search(query, k=k, label_bias=label_bias)
 
 
-def placebo(item: dict, bank: list[dict]) -> dict:
-    candidates = sorted((x for x in bank if x["memory_id"] != item["memory_id"]), key=lambda x: (lexical_similarity(item["claim"], x["claim"]), str(x["memory_id"])))
-    dissimilar = candidates[:max(20, len(candidates) // 10)]
-    target_len = len(json.dumps(item, ensure_ascii=False).split())
-    target = min(dissimilar, key=lambda x: abs(len(json.dumps(x, ensure_ascii=False).split()) - target_len))
-    replacement_len = len(json.dumps(target, ensure_ascii=False).split())
-    p = dict(target); p["memory_id"] = "placebo-" + item["memory_id"]; p["rationale_digest"] = "Format-matched unrelated precedent."
-    p["placebo_for"] = item["memory_id"]; p["placebo_similarity"] = lexical_similarity(item["claim"], target["claim"]); p["placebo_token_ratio"] = abs(replacement_len - target_len) / max(1, target_len)
+def placebo(item: dict, bank: list[dict], max_similarity: float = .15, max_token_ratio: float = .10) -> dict:
+    """Build a format-matched unrelated memory, or mark it invalid.
+
+    The old implementation preferred semantic dissimilarity and only then
+    tried to match length, so it could silently violate the registered
+    placebo thresholds.  Eligibility is now a hard constraint.
+    """
+    source_len = len(json.dumps(item, ensure_ascii=False).split())
+    scored = []
+    for candidate in bank:
+        if candidate["memory_id"] == item["memory_id"]:
+            continue
+        similarity = lexical_similarity(item["claim"], candidate["claim"])
+        candidate_len = len(json.dumps(candidate, ensure_ascii=False).split())
+        token_ratio = abs(candidate_len - source_len) / max(1, source_len)
+        scored.append((similarity, token_ratio, str(candidate["memory_id"]), candidate))
+    if not scored:
+        p = dict(item)
+        p["memory_id"] = "placebo-" + item["memory_id"]
+        p["rationale_digest"] = "Format-matched unrelated precedent unavailable."
+        p["placebo_for"] = item["memory_id"]
+        p["placebo_similarity"] = 1.0
+        p["placebo_token_ratio"] = 1.0
+        p["placebo_valid"] = False
+        return p
+    eligible = [row for row in scored if row[0] < max_similarity and row[1] <= max_token_ratio]
+    if eligible:
+        similarity, token_ratio, _, target = min(eligible, key=lambda row: (row[0], row[1], row[2]))
+        p = dict(target)
+        p["placebo_valid"] = True
+    else:
+        # Preserve diagnostics for the gate, but never use this item in an arm.
+        similarity, token_ratio, _, target = min(scored, key=lambda row: (row[0], row[1], row[2]))
+        p = dict(target)
+        p["placebo_valid"] = False
+    p["memory_id"] = "placebo-" + item["memory_id"]
+    p["rationale_digest"] = "Format-matched unrelated precedent."
+    p["placebo_for"] = item["memory_id"]
+    p["placebo_similarity"] = float(similarity)
+    p["placebo_token_ratio"] = float(token_ratio)
     return p
 
 
@@ -71,13 +103,16 @@ def main() -> None:
         log_path.open("x", encoding="utf-8").close()
     except FileExistsError as exc:
         raise SystemExit(f"Refusing to overwrite existing log: {log_path}. Use a new --output-dir.") from exc
-    all_runs = []; summary = []
+    all_runs = []; summary = []; excluded_units = 0
     for claim in claims:
         candidates = {a: retrieve(claim, bank, a, args.top_k, index) for a in ("A1", "A2", "A3")}
         for item in {x["memory_id"]: x for values in candidates.values() for x in values}.values():
             placebo_lookup.setdefault(item["memory_id"], placebo(item, bank))
         # Start with the most relevant candidate; all retrieved candidates remain logged.
         for item in candidates["A1"][:args.audit_top_n]:
+            if not placebo_lookup[item["memory_id"]].get("placebo_valid", False):
+                excluded_units += 1
+                continue
             unit = (str(claim["id"]), "A1", item["memory_id"])
             start = len(all_runs)
             for r in range(args.repeats):
@@ -100,7 +135,7 @@ def main() -> None:
         row["confirmed"] = bool(local_ok and team_ok and ((row["local_b_ci"][0] > 0 and row["team_ci"][1] < 0) or (row["local_b_ci"][1] < 0 and row["team_ci"][0] > 0)))
     mismatches = [x for x in summary if x["confirmed"]]
     rate = len(mismatches) / len(summary) if summary else 0.0
-    result = {"experiment": "p2_probe_real_llm", "benchmark": "FEVER_binary", "retrieval_method": "bm25", "model": args.model, "n_claims": len(claims), "n_audit_units": len(summary), "repeats": args.repeats, "fdr_q": 0.1, "mismatch_count": len(mismatches), "mismatch_rate": rate, "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3), "direction_i_count": sum(x["confirmed"] and x["classification"] == "local_positive_team_negative" for x in summary), "direction_ii_count": sum(x["confirmed"] and x["classification"] == "local_negative_team_positive" for x in summary), "undetermined_count": len(summary) - len(mismatches), "cache_hits": client.cache_hits, "llm_calls": client.calls, "memory_bank_md5": bank_md5, "config_md5": config_md5, "units": summary}
+    result = {"experiment": "p2_probe_real_llm", "benchmark": "FEVER_binary", "retrieval_method": "bm25", "model": args.model, "n_claims": len(claims), "n_claims_input": len(claims), "n_audit_units": len(summary), "repeats": args.repeats, "fdr_q": 0.1, "mismatch_count": len(mismatches), "mismatch_rate": rate, "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3), "direction_i_count": sum(x["confirmed"] and x["classification"] == "local_positive_team_negative" for x in summary), "direction_ii_count": sum(x["confirmed"] and x["classification"] == "local_negative_team_positive" for x in summary), "undetermined_count": len(summary) - len(mismatches), "cache_hits": client.cache_hits, "llm_calls": client.calls, "memory_bank_md5": bank_md5, "config_md5": config_md5, "units": summary}
     (args.output_dir / "mismatch_rate.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     outputs = [output for run in all_runs for section in ("round1", "round2", "solo") for output in run.get(section, {}).values()]
     parse_rate = sum(bool(x.get("parse_fail")) for x in outputs) / max(1, len(outputs))
@@ -110,7 +145,8 @@ def main() -> None:
     treated_runs = [run for run in all_runs if run["branch"] == "treated"]
     role_diversity = sum(len({tuple(run["candidates"][aid]) for aid in ("A1", "A2", "A3")}) > 1 for run in treated_runs) / max(1, len(treated_runs))
     comparable = [row for row in summary if row["local_a"] != 0 or row["local_b"] != 0]
-    sign_agreement = sum((row["local_a"] > 0) == (row["local_b"] > 0) and (row["local_a"] < 0) == (row["local_b"] < 0) for row in comparable) / max(1, len(comparable))
+    sign_agreement = (sum((row["local_a"] > 0) == (row["local_b"] > 0) and (row["local_a"] < 0) == (row["local_b"] < 0) for row in comparable) / len(comparable)) if comparable else None
+    sign_text = f"{sign_agreement:.2%}" if sign_agreement is not None else "NOT ESTIMABLE: no non-zero local effects"
     gate = (
         "# Real-LLM FEVER Gate Report\n\n"
         f"- Real evidence present for selected claims: {'PASS' if all(x.get('evidence_bundle') for x in claims) else 'FAIL'}\n"
@@ -119,12 +155,17 @@ def main() -> None:
         f"- Placebo similarity < 0.15 and token difference <= 10%: {'PASS' if placebo_ok else 'FAIL'}\n"
         f"- Role-specific candidate sets differ: {'PASS' if role_diversity >= .8 else 'FAIL'} ({role_diversity:.2%})\n"
         f"- Structured-output parse failure rate <= 0.5%: {'PASS' if parse_rate <= .005 else 'FAIL'} ({parse_rate:.4%})\n"
-        f"- Local A/B sign agreement >= 80%: {'PASS' if sign_agreement >= .8 else 'FAIL'} ({sign_agreement:.2%})\n"
+        f"- Local A/B sign agreement >= 80%: {'PASS' if sign_agreement is not None and sign_agreement >= .8 else 'FAIL'} ({sign_text})\n"
         f"- BH-FDR correction q=0.1 applied: PASS\n"
         f"- Confirmed mismatch: **{len(mismatches)} / {len(summary)} ({rate:.3%})**\n"
     )
     (args.output_dir / "gate_report.md").write_text(gate, encoding="utf-8")
-    print(json.dumps({k: result[k] for k in ("n_claims", "n_audit_units", "mismatch_count", "mismatch_rate", "undetermined_count", "cache_hits", "llm_calls")}, indent=2))
+    result["excluded_invalid_placebo_units"] = excluded_units
+    result["n_claims_with_valid_audit"] = len({row["claim_id"] for row in summary})
+    result["comparable_local_effect_units"] = len(comparable)
+    result["local_sign_agreement"] = sign_agreement
+    (args.output_dir / "mismatch_rate.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    print(json.dumps({k: result[k] for k in ("n_claims", "n_claims_with_valid_audit", "n_audit_units", "mismatch_count", "mismatch_rate", "undetermined_count", "excluded_invalid_placebo_units", "comparable_local_effect_units", "local_sign_agreement", "cache_hits", "llm_calls")}, indent=2))
 
 
 if __name__ == "__main__": main()
