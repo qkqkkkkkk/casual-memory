@@ -1,0 +1,80 @@
+{
+  "experiment": "p2_probe_real_llm_diversity",
+  "model": "qwen2.5:7b",
+  "n_claims": 20,
+  "repeats": 5,
+  "memory_bank_md5": "600d5c0cc74ab59bbc2f012e2153de12",
+  "config_md5": "a10c2ac67e8a089c04a3a542e0e9a954",
+  "conditions": [
+    {
+      "condition": "memory_all",
+      "n_runs": 100,
+      "individual_accuracy": 0.66,
+      "error_correlation": 0.5553608877777043,
+      "disagreement_rate": 0.3,
+      "oracle_accuracy": 0.8,
+      "team_accuracy_round1": 0.68,
+      "team_accuracy_round2": 0.67,
+      "individual_accuracy_ci": [
+        0.4666666666666667,
+        0.8333333333333334
+      ],
+      "error_correlation_ci": [
+        0.2263338650438469,
+        0.8198005659687516
+      ],
+      "disagreement_rate_ci": [
+        0.1,
+        0.5
+      ],
+      "oracle_accuracy_ci": [
+        0.6,
+        0.95
+      ],
+      "team_accuracy_round1_ci": [
+        0.46,
+        0.86
+      ],
+      "team_accuracy_round2_ci": [
+        0.47,
+        0.85
+      ]
+    },
+    {
+      "condition": "placebo_all",
+      "n_runs": 100,
+      "individual_accuracy": 0.6466666666666666,
+      "error_correlation": 0.7817662912643762,
+      "disagreement_rate": 0.15,
+      "oracle_accuracy": 0.72,
+      "team_accuracy_round1": 0.65,
+      "team_accuracy_round2": 0.64,
+      "individual_accuracy_ci": [
+        0.44,
+        0.83
+      ],
+      "error_correlation_ci": [
+        0.5485821343335858,
+        0.9600428815940383
+      ],
+      "disagreement_rate_ci": [
+        0.03,
+        0.3
+      ],
+      "oracle_accuracy_ci": [
+        0.51,
+        0.9
+      ],
+      "team_accuracy_round1_ci": [
+        0.45,
+        0.85
+      ],
+      "team_accuracy_round2_ci": [
+        0.43,
+        0.84
+      ]
+    }
+  ],
+  "cache_hits": 0,
+  "llm_calls": 1200
+}

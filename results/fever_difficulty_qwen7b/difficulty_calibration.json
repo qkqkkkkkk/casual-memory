@@ -1,0 +1,50 @@
+{
+  "experiment": "fever_difficulty_calibration",
+  "model": "qwen2.5:7b",
+  "target_band": [
+    0.62,
+    0.8
+  ],
+  "target_center": 0.7,
+  "selected": {
+    "gold_recall": 0.3,
+    "team_accuracy": 0.73,
+    "individual_accuracy": 0.7033333333333334,
+    "runs": 100
+  },
+  "conditions": [
+    {
+      "gold_recall": 0.0,
+      "team_accuracy": 0.65,
+      "individual_accuracy": 0.6233333333333333,
+      "runs": 100
+    },
+    {
+      "gold_recall": 0.3,
+      "team_accuracy": 0.73,
+      "individual_accuracy": 0.7033333333333334,
+      "runs": 100
+    },
+    {
+      "gold_recall": 0.5,
+      "team_accuracy": 0.76,
+      "individual_accuracy": 0.73,
+      "runs": 100
+    },
+    {
+      "gold_recall": 0.7,
+      "team_accuracy": 0.86,
+      "individual_accuracy": 0.8233333333333334,
+      "runs": 100
+    },
+    {
+      "gold_recall": 1.0,
+      "team_accuracy": 0.96,
+      "individual_accuracy": 0.9366666666666666,
+      "runs": 100
+    }
+  ],
+  "llm_calls": 1200,
+  "cache_hits": 1800,
+  "pass": true
+}

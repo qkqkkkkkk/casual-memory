@@ -1,0 +1,524 @@
+{
+  "experiment": "p2_probe_real_llm",
+  "benchmark": "FEVER_binary",
+  "model": "qwen2.5:7b",
+  "n_claims": 20,
+  "n_audit_units": 20,
+  "repeats": 5,
+  "fdr_q": 0.1,
+  "mismatch_count": 0,
+  "mismatch_rate": 0.0,
+  "mismatch_rate_ci": [
+    0.0,
+    0.0
+  ],
+  "direction_i_count": 0,
+  "direction_ii_count": 0,
+  "undetermined_count": 20,
+  "cache_hits": 210,
+  "llm_calls": 1190,
+  "memory_bank_md5": "600d5c0cc74ab59bbc2f012e2153de12",
+  "config_md5": "b0f40d112b214dbc4e7d21943cc06169",
+  "units": [
+    {
+      "claim_id": "39897",
+      "memory_id": "fever-train-81659",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.2,
+      "team_ci": [
+        0.0,
+        0.6
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "195038",
+      "memory_id": "fever-train-64125",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "106926",
+      "memory_id": "fever-train-96122",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "150834",
+      "memory_id": "fever-train-48799",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "165663",
+      "memory_id": "fever-train-177254",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "97017",
+      "memory_id": "fever-train-184489",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "101771",
+      "memory_id": "fever-train-43939",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "141072",
+      "memory_id": "fever-train-184814",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "128297",
+      "memory_id": "fever-train-140198",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "181871",
+      "memory_id": "fever-train-79436",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "225295",
+      "memory_id": "fever-train-117205",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "5454",
+      "memory_id": "fever-train-32718",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "26132",
+      "memory_id": "fever-train-42863",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "128229",
+      "memory_id": "fever-train-198584",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "38861",
+      "memory_id": "fever-train-81659",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.2,
+      "team_ci": [
+        0.0,
+        0.6
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "3009",
+      "memory_id": "fever-train-52635",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.2,
+      "team_ci": [
+        0.0,
+        0.6
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "181205",
+      "memory_id": "fever-train-213874",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "124339",
+      "memory_id": "fever-train-96122",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "148534",
+      "memory_id": "fever-train-118659",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": 0.0,
+      "team_ci": [
+        0.0,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 1.0,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    },
+    {
+      "claim_id": "23885",
+      "memory_id": "fever-train-65121",
+      "local_b": 0.0,
+      "local_b_ci": [
+        0.0,
+        0.0
+      ],
+      "local_a": 0.0,
+      "local_a_ci": [
+        0.0,
+        0.0
+      ],
+      "team": -0.4,
+      "team_ci": [
+        -0.8,
+        0.0
+      ],
+      "local_p": 1.0,
+      "team_p": 0.5,
+      "classification": "other",
+      "local_bh_reject": false,
+      "team_bh_reject": false,
+      "confirmed": false
+    }
+  ]
+}
