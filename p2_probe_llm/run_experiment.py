@@ -89,7 +89,7 @@ def main() -> None:
     p.add_argument("--endpoint", default="http://127.0.0.1:11434/v1")
     p.add_argument("--api-key", default=None)
     p.add_argument("--model", default="qwen2.5:7b")
-    p.add_argument("--claims", type=int, default=20); p.add_argument("--repeats", type=int, default=5); p.add_argument("--top-k", type=int, default=6); p.add_argument("--audit-top-n", type=int, default=1)
+    p.add_argument("--claims", type=int, default=20); p.add_argument("--repeats", type=int, default=5); p.add_argument("--top-k", type=int, choices=(1,), default=1, help="Number of memories injected per agent; fixed to top-1 for this experiment"); p.add_argument("--audit-top-n", type=int, choices=(1,), default=1)
     p.add_argument("--bootstrap", type=int, default=2000); p.add_argument("--seed", type=int, default=42); p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args(); args.output_dir.mkdir(parents=True, exist_ok=True)
     claims = select_claims(load(args.test), args.claims, args.seed); bank = load(args.memory_bank, binary=False)

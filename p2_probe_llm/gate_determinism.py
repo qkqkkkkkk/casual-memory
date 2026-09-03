@@ -13,7 +13,7 @@ from .retrieval import BM25Index
 
 def main() -> None:
     p = argparse.ArgumentParser(description="G0 cache/determinism gate for the real-LLM MAS")
-    p.add_argument("--test", type=Path, required=True); p.add_argument("--memory-bank", type=Path, required=True); p.add_argument("--endpoint", default="http://127.0.0.1:11434/v1"); p.add_argument("--api-key", default=None); p.add_argument("--model", default="qwen2.5:7b"); p.add_argument("--top-k", type=int, default=6); p.add_argument("--output-dir", type=Path, required=True)
+    p.add_argument("--test", type=Path, required=True); p.add_argument("--memory-bank", type=Path, required=True); p.add_argument("--endpoint", default="http://127.0.0.1:11434/v1"); p.add_argument("--api-key", default=None); p.add_argument("--model", default="qwen2.5:7b"); p.add_argument("--top-k", type=int, choices=(1,), default=1, help="Number of memories injected per agent; fixed to top-1 for this experiment"); p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args(); args.output_dir.mkdir(parents=True, exist_ok=True)
     report_path = args.output_dir / "g0_report.json"
     if report_path.exists(): raise SystemExit(f"Refusing to overwrite existing report: {report_path}")

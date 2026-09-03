@@ -16,7 +16,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Calibrate real-LLM FEVER evidence difficulty")
     p.add_argument("--test", type=Path, required=True); p.add_argument("--memory-bank", type=Path, required=True)
     p.add_argument("--endpoint", default="http://127.0.0.1:11434/v1"); p.add_argument("--api-key", default=None); p.add_argument("--model", default="qwen2.5:7b")
-    p.add_argument("--claims", type=int, default=100); p.add_argument("--repeats", type=int, default=1); p.add_argument("--top-k", type=int, default=6); p.add_argument("--gold-recalls", default="0,0.3,0.5,0.7,1.0"); p.add_argument("--seed", type=int, default=42); p.add_argument("--output-dir", type=Path, required=True)
+    p.add_argument("--claims", type=int, default=100); p.add_argument("--repeats", type=int, default=1); p.add_argument("--top-k", type=int, choices=(1,), default=1, help="Number of memories injected per agent; fixed to top-1 for this experiment"); p.add_argument("--gold-recalls", default="0,0.3,0.5,0.7,1.0"); p.add_argument("--seed", type=int, default=42); p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args(); args.output_dir.mkdir(parents=True, exist_ok=True)
     report_path = args.output_dir / "difficulty_calibration.json"
     if report_path.exists(): raise SystemExit(f"Refusing to overwrite existing calibration: {report_path}")

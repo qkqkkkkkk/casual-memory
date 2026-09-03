@@ -15,7 +15,7 @@ def normalize(value: str) -> str:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Validate enriched FEVER inputs before spending LLM calls")
-    p.add_argument("--test", type=Path, required=True); p.add_argument("--memory-bank", type=Path, required=True); p.add_argument("--sample-claims", type=int, default=100); p.add_argument("--top-k", type=int, default=6); p.add_argument("--output", type=Path, default=None)
+    p.add_argument("--test", type=Path, required=True); p.add_argument("--memory-bank", type=Path, required=True); p.add_argument("--sample-claims", type=int, default=100); p.add_argument("--top-k", type=int, choices=(1,), default=1, help="Number of memories injected per agent; fixed to top-1 for this experiment"); p.add_argument("--output", type=Path, default=None)
     args = p.parse_args()
     raw_test = [json.loads(line) for line in args.test.read_text(encoding="utf-8").splitlines() if line.strip()]
     binary = [row for row in raw_test if row.get("label") in {"SUPPORTS", "REFUTES"}]

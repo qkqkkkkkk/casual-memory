@@ -70,7 +70,7 @@ Validate all inputs before starting the model:
 python -m p2_probe_llm.validate_inputs \
   --test data/fever/fever_dev_enriched.jsonl \
   --memory-bank data/fever/memory_bank.jsonl \
-  --sample-claims 100 --top-k 6
+  --sample-claims 100 --top-k 1
 ```
 
 Do not spend LLM calls unless this command reports `"pass": true`.
@@ -116,7 +116,7 @@ python -m p2_probe_llm.gate_determinism \
   --test data/fever/fever_dev_enriched.jsonl \
   --memory-bank data/fever/memory_bank.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
-  --model qwen2.5:7b --top-k 6 \
+  --model qwen2.5:7b --top-k 1 \
   --output-dir results/fever_p2_llm_g0
 ```
 
@@ -134,7 +134,7 @@ python -m p2_probe_llm.calibrate_difficulty \
   --memory-bank data/fever/memory_bank.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
-  --claims 100 --repeats 1 --top-k 6 --seed 42 \
+  --claims 100 --repeats 1 --top-k 1 --seed 42 \
   --output-dir results/fever_difficulty_qwen7b
 ```
 
@@ -152,7 +152,7 @@ python -m p2_probe_llm.run_experiment \
   --memory-bank data/fever/memory_bank.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
-  --claims 20 --repeats 5 --top-k 6 --audit-top-n 1 \
+  --claims 20 --repeats 5 --top-k 1 --audit-top-n 1 \
   --bootstrap 2000 --seed 42 \
   --output-dir results/fever_p2_llm_e1_pilot
 ```
@@ -165,7 +165,7 @@ python -m p2_probe_llm.run_diversity \
   --memory-bank data/fever/memory_bank.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
-  --claims 20 --repeats 5 --top-k 6 --bootstrap 2000 --seed 42 \
+  --claims 20 --repeats 5 --top-k 1 --bootstrap 2000 --seed 42 \
   --output-dir results/fever_p2_llm_e2_pilot
 ```
 
