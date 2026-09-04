@@ -28,8 +28,9 @@ def main() -> None:
     test_keys = {normalize(row["claim"]) for row in test}
     experience_keys = {normalize(row["claim"]) for row in experience}
     distractor_keys = {normalize(row["claim"]) for row in distractors}
-    experience_ids = {_memory_source_keys(row).intersection({str(row.get("memory_id")), str(row.get("source_example_id"))}) for row in experience}
-    experience_id_values = {value for values in experience_ids for value in values}
+    # Flatten provenance IDs into one hashable set.  The previous version
+    # accidentally created a set of sets, which raises ``TypeError``.
+    experience_id_values = {value for row in experience for value in _memory_source_keys(row)}
     distractor_id_values = {value for row in distractors for value in _memory_source_keys(row)}
     sampled = select_claims(test, min(args.sample_claims, len(test)), 42)
     role_different = 0; quality = []; valid_candidates = 0; provenance_overlap = 0; exact_evidence_overlap = 0
