@@ -169,7 +169,7 @@ LLM logs. The SQLite cache is a correctness component: identical prompts in
 paired arms are served identically even when the model server itself is not
 bitwise deterministic.
 
-Render the E1 scatter after the pilot finishes:
+Render the E1 scatter as a PNG after the pilot finishes:
 
 ```bash
 MPLBACKEND=Agg MPLCONFIGDIR=/tmp/cmi-mpl \
@@ -177,6 +177,8 @@ python -m p2_probe_llm.plot_results \
   --e1-dir results/fever_p2_llm_e1_pilot \
   --output-dir results/fever_p2_llm_figures
 ```
+
+The output file is `fig1_llm_scatter.png`.
 
 Only after the pilot passes `gate_report.md` should E1 be expanded toward
 `--claims 240 --repeats 32`. Increasing `--audit-top-n` multiplies cost and

@@ -18,7 +18,9 @@ def main() -> None:
     colors = ["#d62728" if row.get("confirmed") else "#9aa0a6" if row.get("classification") != "other" else "#1f77b4" for row in rows]
     fig, ax = plt.subplots(figsize=(6.2, 5.2)); ax.scatter([r["local_b"] for r in rows], [r["team"] for r in rows], c=colors, s=18, alpha=.7)
     ax.axhline(0, color="black", lw=.8); ax.axvline(0, color="black", lw=.8); ax.set(xlabel="Local causal utility B", ylabel="Team causal utility", title=f"Real-LLM FEVER mismatch ({e1['model']})")
-    fig.tight_layout(); fig.savefig(args.output_dir / "fig1_llm_scatter.pdf"); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(args.output_dir / "fig1_llm_scatter.png", dpi=220, format="png")
+    plt.close(fig)
 
     print(args.output_dir)
 
