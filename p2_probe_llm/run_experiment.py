@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .client import CachedChat
 from .mas import run_episode
-from .stats import bh_reject, cluster_rate_ci, effect, paired_sign_pvalue
+from .stats import bh_reject, cluster_paired_effect, cluster_rate_ci, effect, paired_sign_pvalue
 from .retrieval import BM25Index, role_query, tokenize
 
 
@@ -82,7 +82,7 @@ def placebo(item: dict, bank: list[dict], max_similarity: float = .15, max_token
     return p
 
 
-def main() -> None:
+def _legacy_main() -> None:
     p = argparse.ArgumentParser(description="Real LLM FEVER local/team causal mismatch experiment")
     p.add_argument("--test", type=Path, required=True, help="Enriched FEVER dev JSONL")
     p.add_argument("--memory-bank", type=Path, required=True, help="Frozen bank JSONL from build_memory_bank.py")
@@ -126,16 +126,26 @@ def main() -> None:
             ld = [int(t["per_agent_correct_r1"]["A1"]) - int(c["per_agent_correct_r1"]["A1"]) for t, c in zip(tt, tc)]
             ad = [int(t["per_agent_correct_solo"]["A1"]) - int(c["per_agent_correct_solo"]["A1"]) for t, c in zip(tt, tc)]
             td = [int(t["team_correct"]) - int(c["team_correct"]) for t, c in zip(tt, tc)]
+            r1_team_t = [sum(r["per_agent_correct_r1"].values()) >= 2 for r in tt]
+            r1_team_c = [sum(r["per_agent_correct_r1"].values()) >= 2 for r in tc]
+            r2_delta = [int(t["team_correct"]) - int(t["round1"]["correct"]) if "correct" in t.get("round1", {}) else 0 for t in tt]
             lp, lci = effect(ld, args.bootstrap, args.seed); ap, aci = effect(ad, args.bootstrap, args.seed + 1); tp, tci = effect(td, args.bootstrap, args.seed + 2)
             classification = "local_positive_team_negative" if lp > 0 and tp < 0 else "local_negative_team_positive" if lp < 0 and tp > 0 else "other"
-            summary.append({"claim_id": str(claim["id"]), "memory_id": item["memory_id"], "local_b": lp, "local_b_ci": lci, "local_a": ap, "local_a_ci": aci, "team": tp, "team_ci": tci, "local_p": paired_sign_pvalue(ld), "team_p": paired_sign_pvalue(td), "classification": classification})
+            summary.append({"claim_id": str(claim["id"]), "memory_id": item["memory_id"], "local_b": lp, "local_b_ci": lci, "local_a": ap, "local_a_ci": aci, "team": tp, "team_ci": tci, "round1_team": sum(r1_team_t) / max(1, len(r1_team_t)) - sum(r1_team_c) / max(1, len(r1_team_c)), "round2_team": tp - (sum(r1_team_t) / max(1, len(r1_team_t)) - sum(r1_team_c) / max(1, len(r1_team_c))), "local_p": paired_sign_pvalue(ld), "team_p": paired_sign_pvalue(td), "classification": classification})
     local_reject = bh_reject([x["local_p"] for x in summary]); team_reject = bh_reject([x["team_p"] for x in summary])
     for row, local_ok, team_ok in zip(summary, local_reject, team_reject):
         row["local_bh_reject"] = local_ok; row["team_bh_reject"] = team_ok
         row["confirmed"] = bool(local_ok and team_ok and ((row["local_b_ci"][0] > 0 and row["team_ci"][1] < 0) or (row["local_b_ci"][1] < 0 and row["team_ci"][0] > 0)))
     mismatches = [x for x in summary if x["confirmed"]]
     rate = len(mismatches) / len(summary) if summary else 0.0
-    result = {"experiment": "p2_probe_real_llm", "benchmark": "FEVER_binary", "retrieval_method": "bm25", "model": args.model, "n_claims": len(claims), "n_claims_input": len(claims), "n_audit_units": len(summary), "repeats": args.repeats, "fdr_q": 0.1, "mismatch_count": len(mismatches), "mismatch_rate": rate, "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3), "direction_i_count": sum(x["confirmed"] and x["classification"] == "local_positive_team_negative" for x in summary), "direction_ii_count": sum(x["confirmed"] and x["classification"] == "local_negative_team_positive" for x in summary), "undetermined_count": len(summary) - len(mismatches), "cache_hits": client.cache_hits, "llm_calls": client.calls, "memory_bank_md5": bank_md5, "config_md5": config_md5, "units": summary}
+    result = {"experiment": "p2_probe_real_llm", "benchmark": "FEVER_binary", "retrieval_method": "bm25_claim_only", "model": args.model, "n_claims": len(claims), "n_claims_input": len(claims), "n_audit_units": len(summary), "repeats": args.repeats, "fdr_q": 0.1, "mismatch_count": len(mismatches), "mismatch_rate": rate, "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3), "direction_i_count": sum(x["confirmed"] and x["classification"] == "local_positive_team_negative" for x in summary), "direction_ii_count": sum(x["confirmed"] and x["classification"] == "local_negative_team_positive" for x in summary), "undetermined_count": len(summary) - len(mismatches), "cache_hits": client.cache_hits, "llm_calls": client.calls, "memory_bank_md5": bank_md5, "config_md5": config_md5, "units": summary}
+    result["aggregate_effects"] = {
+        "local_b": {"estimate": cluster_paired_effect([[row["local_b"]] for row in summary], args.bootstrap, args.seed + 10)[0], "ci": cluster_paired_effect([[row["local_b"]] for row in summary], args.bootstrap, args.seed + 10)[1]},
+        "local_a": {"estimate": cluster_paired_effect([[row["local_a"]] for row in summary], args.bootstrap, args.seed + 11)[0], "ci": cluster_paired_effect([[row["local_a"]] for row in summary], args.bootstrap, args.seed + 11)[1]},
+        "team": {"estimate": cluster_paired_effect([[row["team"]] for row in summary], args.bootstrap, args.seed + 12)[0], "ci": cluster_paired_effect([[row["team"]] for row in summary], args.bootstrap, args.seed + 12)[1]},
+        "round1_team": {"estimate": cluster_paired_effect([[row["round1_team"]] for row in summary], args.bootstrap, args.seed + 13)[0], "ci": cluster_paired_effect([[row["round1_team"]] for row in summary], args.bootstrap, args.seed + 13)[1]},
+        "round2_increment": {"estimate": cluster_paired_effect([[row["round2_team"]] for row in summary], args.bootstrap, args.seed + 14)[0], "ci": cluster_paired_effect([[row["round2_team"]] for row in summary], args.bootstrap, args.seed + 14)[1]},
+    }
     (args.output_dir / "mismatch_rate.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     outputs = [output for run in all_runs for section in ("round1", "round2", "solo") for output in run.get(section, {}).values()]
     parse_rate = sum(bool(x.get("parse_fail")) for x in outputs) / max(1, len(outputs))
@@ -168,4 +178,11 @@ def main() -> None:
     print(json.dumps({k: result[k] for k in ("n_claims", "n_claims_with_valid_audit", "n_audit_units", "mismatch_count", "mismatch_rate", "undetermined_count", "excluded_invalid_placebo_units", "comparable_local_effect_units", "local_sign_agreement", "cache_hits", "llm_calls")}, indent=2))
 
 
-if __name__ == "__main__": main()
+def main() -> None:
+    """Stable public entry point for the focused E1 experiment."""
+    from .run_experiment_e1 import main as e1_main
+    e1_main()
+
+
+if __name__ == "__main__":
+    main()

@@ -7,24 +7,26 @@ from pathlib import Path
 
 from .client import CachedChat
 from .mas import run_episode
-from .run_experiment import load, retrieve
+from .run_experiment_e1 import load, retrieve
 from .retrieval import BM25Index
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description="G0 cache/determinism gate for the real-LLM MAS")
-    p.add_argument("--test", type=Path, required=True); p.add_argument("--memory-bank", type=Path, required=True); p.add_argument("--endpoint", default="http://127.0.0.1:11434/v1"); p.add_argument("--api-key", default=None); p.add_argument("--model", default="qwen2.5:7b"); p.add_argument("--top-k", type=int, choices=(1,), default=1, help="Number of memories injected per agent; fixed to top-1 for this experiment"); p.add_argument("--output-dir", type=Path, required=True)
+    p.add_argument("--test", type=Path, required=True); p.add_argument("--experience-bank", type=Path, required=True); p.add_argument("--endpoint", default="http://127.0.0.1:11434/v1"); p.add_argument("--api-key", default=None); p.add_argument("--model", default="qwen2.5:7b"); p.add_argument("--top-k", type=int, choices=(1,), default=1); p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args(); args.output_dir.mkdir(parents=True, exist_ok=True)
     report_path = args.output_dir / "g0_report.json"
     if report_path.exists(): raise SystemExit(f"Refusing to overwrite existing report: {report_path}")
-    claim = load(args.test)[0]; bank = load(args.memory_bank, binary=False)
+    claim = load(args.test)[0]; bank = load(args.experience_bank, binary=False)
     index = BM25Index(bank)
     candidates = {aid: retrieve(claim, bank, aid, args.top_k, index) for aid in ("A1", "A2", "A3")}
+    if any(not values for values in candidates.values()):
+        raise SystemExit("G0 could not retrieve an eligible top-1 memory for every agent")
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
     first = run_episode(client, claim, candidates, 0, "memory_all")
     second = run_episode(client, claim, candidates, 0, "memory_all")
     same = first.round1 == second.round1 and first.round2 == second.round2 and first.team_verdict == second.team_verdict
-    report = {"pass": bool(same and second.llm_calls == 0 and second.cache_hits == 6), "semantic_outputs_identical": same, "second_run_llm_calls": second.llm_calls, "second_run_cache_hits": second.cache_hits, "expected_second_run_cache_hits": 6}
+    report = {"pass": bool(same and second.llm_calls == 0 and second.cache_hits == 6), "semantic_outputs_identical": same, "second_run_llm_calls": second.llm_calls, "second_run_cache_hits": second.cache_hits, "expected_second_run_cache_hits": 6, "experience_bank": str(args.experience_bank)}
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8"); print(json.dumps(report, indent=2))
     if not report["pass"]: raise SystemExit(2)
 

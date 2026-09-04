@@ -59,9 +59,8 @@ class BM25Index:
 
 def role_query(claim: dict[str, Any], agent_id: str) -> tuple[str, str | None]:
     claim_text = str(claim.get("claim", ""))
-    evidence_text = " ".join(str(x.get("text", "")) for x in claim.get("evidence_bundle", []))
     if agent_id == "A1":
-        return f"{claim_text} {evidence_text}", None
+        return claim_text, None
     if agent_id == "A2":
         return f"contradiction counterexample evidence gap {claim_text}", "REFUTES"
     return f"historical precedent prior claim {claim_text}", None

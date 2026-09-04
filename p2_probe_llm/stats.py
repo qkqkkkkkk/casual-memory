@@ -45,6 +45,21 @@ def cluster_rate_ci(rows: list[dict], n_bootstrap: int, seed: int) -> list[float
     return [rates[int(0.025 * len(rates))], rates[int(0.975 * len(rates))]]
 
 
+def cluster_paired_effect(unit_differences: list[list[float]], n_bootstrap: int, seed: int) -> tuple[float, list[float]]:
+    """Mean paired effect with claim-level cluster bootstrap."""
+    if not unit_differences:
+        return 0.0, [0.0, 0.0]
+    point = sum(sum(values) for values in unit_differences) / max(1, sum(len(values) for values in unit_differences))
+    rng = random.Random(seed)
+    boot = []
+    for _ in range(n_bootstrap):
+        sampled = [rng.choice(unit_differences) for _ in unit_differences]
+        flat = [value for values in sampled for value in values]
+        boot.append(sum(flat) / max(1, len(flat)))
+    boot.sort()
+    return point, [boot[int(.025 * len(boot))], boot[int(.975 * len(boot))]]
+
+
 def phi(xs: list[bool], ys: list[bool]) -> float:
     a = sum(x and y for x, y in zip(xs, ys)); b = sum(x and not y for x, y in zip(xs, ys))
     c = sum((not x) and y for x, y in zip(xs, ys)); d = sum((not x) and (not y) for x, y in zip(xs, ys))

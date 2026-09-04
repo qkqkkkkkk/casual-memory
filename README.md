@@ -25,10 +25,11 @@ Outputs are `mismatch_rate.json`, `diversity.json`, `gate_report.md`, `fig1_scat
 ## Real LLM experiment
 
 The controlled simulator above is kept unchanged. The separate
-`p2_probe_llm/` package runs the corresponding experiment with a real
+`p2_probe_llm/` package runs the E1 unilateral-memory experiment with a real
 OpenAI-compatible LLM and resolved FEVER Wikipedia evidence. See
-`p2_probe_llm/README.md` for evidence preparation, memory-bank construction,
-E1 mismatch, and E2 diversity commands.
+`p2_probe_llm/README.md` for disjoint pool construction, calibration, input
+validation, and the E1 run command. E2 is retained separately and is not part
+of this focused study.
 
 If the experiment completed without matplotlib, render the PDFs later without rerunning the experiment:
 

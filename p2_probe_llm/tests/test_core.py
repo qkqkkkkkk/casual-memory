@@ -9,6 +9,7 @@ from p2_probe_llm.evidence import enrich_split
 from p2_probe_llm.mas import run_episode
 from p2_probe_llm.stats import bh_reject, effect
 from p2_probe_llm.retrieval import BM25Index
+from p2_probe_llm.run_experiment_e1 import memory_is_eligible, retrieve
 
 
 class FakeClient:
@@ -60,6 +61,23 @@ class RealProbeTests(unittest.TestCase):
         second = [x["memory_id"] for x in index.search("Marie Curie Nobel", k=2)]
         self.assertEqual(first, second)
         self.assertEqual(first[0], "a")
+
+    def test_e1_retrieval_excludes_distractor_provenance_and_evidence(self):
+        claim = {
+            "id": "c1", "claim": "Marie Curie won a Nobel Prize",
+            "label": "SUPPORTS",
+            "evidence_bundle": [{"text": "Marie Curie won the Nobel Prize."}],
+            "evidence_policy": {"distractor_source_ids": ["fever-train-bad"]},
+        }
+        bank = [
+            {"memory_id": "fever-train-bad", "source_example_id": "bad", "claim": "Marie Curie Nobel", "gold_label": "SUPPORTS", "evidence_bundle": [{"text": "Unrelated."}]},
+            {"memory_id": "fever-train-overlap", "claim": "Marie Curie Nobel Prize", "gold_label": "SUPPORTS", "evidence_bundle": [{"text": "Marie Curie won the Nobel Prize."}]},
+            {"memory_id": "fever-train-good", "claim": "Alan Turing worked on computing", "gold_label": "SUPPORTS", "evidence_bundle": [{"text": "Turing worked on computing."}]},
+        ]
+        found = retrieve(claim, bank, "A1", 1)
+        self.assertEqual([item["memory_id"] for item in found], ["fever-train-good"])
+        self.assertFalse(memory_is_eligible(claim, bank[0]))
+        self.assertFalse(memory_is_eligible(claim, bank[1]))
 
 
 if __name__ == "__main__":

@@ -2,10 +2,12 @@
 
 This package is intentionally separate from `p2_probe/`. It calls a real
 OpenAI-compatible chat model, scores exact FEVER labels, and never uses an
-LLM judge. `run_experiment.py` implements unilateral E1 interventions;
-`run_diversity.py` implements memory-all versus placebo-all E2. Retrieval is
-now a deterministic, dependency-free BM25 index with fixed role queries;
-placebo diagnostics still use lexical overlap only to verify dissimilarity.
+LLM judge. The current study focuses on unilateral E1 interventions:
+`run_experiment.py` changes only A1's top-1 memory and measures local versus
+team effects. E2 remains in the repository but is intentionally not part of
+this run. Retrieval is a deterministic, dependency-free BM25 index with fixed
+role queries; placebo diagnostics use lexical overlap only to verify
+dissimilarity.
 
 ## 1. Obtain official FEVER resources
 
@@ -51,25 +53,29 @@ The command reports `binary_with_evidence`. Do not continue unless its ratio
 to `binary` is high; a low ratio usually means `--wiki` points to the wrong
 directory or the dump format does not match.
 
-## 3. Build the frozen memory bank
+## 3. Build disjoint experience and distractor pools
 
 ```bash
-python -m p2_probe_llm.build_memory_bank \
+python -m p2_probe_llm.build_pools \
   --input data/fever/fever_train_enriched.jsonl \
   --exclude-claims-from data/fever/fever_dev_enriched.jsonl \
-  --output data/fever/memory_bank.jsonl \
-  --max-items 2000 --seed 42
+  --experience-output data/fever/experience_bank.jsonl \
+  --distractor-output data/fever/distractor_pool.jsonl \
+  --max-experience-items 2000 --max-distractor-items 4000 \
+  --seed 42
 ```
 
-This produces a balanced SUPPORTS/REFUTES bank and prints its MD5. The runner
-records the same MD5 in every result.
+The experience bank is used only for retrieval. The disjoint distractor pool
+is used only to construct the selected evidence bundles. Both hashes are
+recorded in every E1 result.
 
 Validate all inputs before starting the model:
 
 ```bash
 python -m p2_probe_llm.validate_inputs \
   --test data/fever/fever_dev_enriched.jsonl \
-  --memory-bank data/fever/memory_bank.jsonl \
+  --experience-bank data/fever/experience_bank.jsonl \
+  --distractor-bank data/fever/distractor_pool.jsonl \
   --sample-claims 100 --top-k 1
 ```
 
@@ -114,7 +120,7 @@ Run the G0 cache gate before calibration or experiments:
 ```bash
 python -m p2_probe_llm.gate_determinism \
   --test data/fever/fever_dev_enriched.jsonl \
-  --memory-bank data/fever/memory_bank.jsonl \
+  --experience-bank data/fever/experience_bank.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b --top-k 1 \
   --output-dir results/fever_p2_llm_g0
@@ -124,23 +130,23 @@ Do not continue unless it reports `"pass": true`.
 
 ## 5. Calibrate evidence difficulty
 
-Use the same model that will run E1/E2. This tests
+Use the same model that will run E1. This tests
 `gold_recall = {0, 0.3, 0.5, 0.7, 1.0}` and freezes the condition whose
 placebo-team accuracy lies in `[0.62, 0.80]` and is closest to `0.70`:
 
 ```bash
 python -m p2_probe_llm.calibrate_difficulty \
   --test data/fever/fever_dev_enriched.jsonl \
-  --memory-bank data/fever/memory_bank.jsonl \
+  --experience-bank data/fever/experience_bank.jsonl \
+  --distractor-bank data/fever/distractor_pool.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
   --claims 100 --repeats 1 --top-k 1 --seed 42 \
   --output-dir results/fever_difficulty_qwen7b
 ```
 
-Do not continue unless the report contains `"pass": true`. E1 and E2 must
-both use the generated `fever_dev_selected_difficulty.jsonl`; changing the
-evidence policy between them invalidates the mechanism comparison.
+Do not continue unless the report contains `"pass": true`. E1 must use the
+generated `fever_dev_selected_difficulty.jsonl`.
 
 ## 6. Run a real-LLM pilot
 
@@ -149,24 +155,13 @@ E1 local/team mismatch:
 ```bash
 python -m p2_probe_llm.run_experiment \
   --test results/fever_difficulty_qwen7b/fever_dev_selected_difficulty.jsonl \
-  --memory-bank data/fever/memory_bank.jsonl \
+  --experience-bank data/fever/experience_bank.jsonl \
+  --distractor-bank data/fever/distractor_pool.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
-  --claims 20 --repeats 5 --top-k 1 --audit-top-n 1 \
+  --claims 20 --repeats 8 --top-k 1 --audit-top-n 1 \
   --bootstrap 2000 --seed 42 \
   --output-dir results/fever_p2_llm_e1_pilot
-```
-
-E2 diversity mechanism:
-
-```bash
-python -m p2_probe_llm.run_diversity \
-  --test results/fever_difficulty_qwen7b/fever_dev_selected_difficulty.jsonl \
-  --memory-bank data/fever/memory_bank.jsonl \
-  --endpoint http://127.0.0.1:11434/v1 \
-  --model qwen2.5:7b \
-  --claims 20 --repeats 5 --top-k 1 --bootstrap 2000 --seed 42 \
-  --output-dir results/fever_p2_llm_e2_pilot
 ```
 
 Each output directory must be new. The runner refuses to overwrite existing
@@ -174,13 +169,12 @@ LLM logs. The SQLite cache is a correctness component: identical prompts in
 paired arms are served identically even when the model server itself is not
 bitwise deterministic.
 
-Render the two paper-style figures after both experiments finish:
+Render the E1 scatter after the pilot finishes:
 
 ```bash
 MPLBACKEND=Agg MPLCONFIGDIR=/tmp/cmi-mpl \
 python -m p2_probe_llm.plot_results \
   --e1-dir results/fever_p2_llm_e1_pilot \
-  --e2-dir results/fever_p2_llm_e2_pilot \
   --output-dir results/fever_p2_llm_figures
 ```
 
@@ -188,6 +182,7 @@ Only after the pilot passes `gate_report.md` should E1 be expanded toward
 `--claims 240 --repeats 32`. Increasing `--audit-top-n` multiplies cost and
 should be done only after screening or budgeting.
 
-The E1 pilot is roughly 1,200 uncached calls at 20 claims x 5 repeats x one
-audited memory. A direct 240 x 32 run can approach 90,000 calls, so do not
-launch it before checking the pilot gates and throughput.
+The E1 pilot is roughly 1,900 uncached calls at 20 claims x 8 repeats x one
+audited memory. First verify that the top-1 memory changes A1's round-1 or
+solo answer. Then expand toward 40 claims x 16 repeats. Do not launch the
+full 87-claim run before checking the pilot gates and throughput.
