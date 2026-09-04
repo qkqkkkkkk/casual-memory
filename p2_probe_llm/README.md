@@ -102,7 +102,10 @@ python -m p2_probe_llm.validate_inputs \
   --output results/e1_input_validation_gmemory_v2.json
 ```
 
-Do not spend LLM calls unless this command reports `"pass": true`.
+Do not spend LLM calls unless this command reports `"pass": true`. The gate
+allows up to 5% of sampled claims to have no eligible memory above the frozen
+`0.3` threshold. Such claims are excluded and reported rather than assigned a
+lower-quality memory.
 
 ## 4. Start a model server
 

@@ -51,8 +51,8 @@ def main() -> None:
             for repeat in range(args.repeats):
                 run = run_episode(client, variant, candidates, repeat, "placebo_all")
                 correct += int(run.team_correct); individual_correct += sum(run.per_agent_correct_r1.values()); total += 1
-        rows.append({"gold_recall": recall, "team_accuracy": correct / max(1, total), "individual_accuracy": individual_correct / max(1, 3 * total), "runs": total, "eligible_claims": len(eligible_variants[recall]), "excluded_invalid_placebo_claims": excluded_by_recall[recall]})
-    eligible = [row for row in rows if .62 <= row["team_accuracy"] <= .80]
+        rows.append({"gold_recall": recall, "team_accuracy": correct / max(1, total), "individual_accuracy": individual_correct / max(1, 3 * total), "runs": total, "eligible_claims": len(eligible_variants[recall]), "candidate_coverage": len(eligible_variants[recall]) / max(1, len(sampled)), "excluded_invalid_placebo_claims": excluded_by_recall[recall]})
+    eligible = [row for row in rows if row["candidate_coverage"] >= .95 and .62 <= row["team_accuracy"] <= .80]
     selected = min(eligible, key=lambda row: abs(row["team_accuracy"] - .70)) if eligible else None
     report = {"experiment": "fever_difficulty_calibration", "model": args.model, "retrieval_method": "gmemory_semantic_claim", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "target_band": [.62, .80], "target_center": .70, "selected": selected, "conditions": rows, "llm_calls": client.calls, "cache_hits": client.cache_hits, "experience_bank": str(args.experience_bank), "distractor_bank": str(args.distractor_bank), "pass": selected is not None}
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")

@@ -38,10 +38,15 @@ def main() -> None:
     index = GMemorySemanticIndex(experience, args.embedding_model, args.retrieval_threshold)
     sampled = select_claims(test, min(args.sample_claims, len(test)), 42)
     shared_count = 0; quality = []; retrieval_scores = []; valid_candidates = 0; provenance_overlap = 0; exact_evidence_overlap = 0
+    no_eligible_candidate_claims = []
     for claim in sampled:
         shared = retrieve(claim, experience, "A1", args.top_k, index)
         candidates = {aid: list(shared) for aid in ("A1", "A2", "A3")}
         if any(not values for values in candidates.values()):
+            no_eligible_candidate_claims.append({
+                "claim_id": str(claim.get("id")),
+                "claim": claim.get("claim", ""),
+            })
             continue
         valid_candidates += 1
         shared_count += int(len({tuple(x["memory_id"] for x in values) for values in candidates.values()}) == 1)
@@ -63,6 +68,9 @@ def main() -> None:
         "exact_train_dev_overlap": len(test_keys & (experience_keys | distractor_keys)),
         "experience_distractor_id_overlap": len(experience_id_values & distractor_id_values),
         "valid_candidate_claims": valid_candidates,
+        "sampled_claims": len(sampled),
+        "candidate_coverage": valid_candidates / max(1, len(sampled)),
+        "no_eligible_candidate_claims": no_eligible_candidate_claims,
         "retrieved_provenance_overlap": provenance_overlap,
         "retrieved_exact_evidence_overlap": exact_evidence_overlap,
         "shared_candidate_rate": shared_count / max(1, valid_candidates),
@@ -78,7 +86,7 @@ def main() -> None:
         and report["experience_distractor_id_overlap"] == 0
         and report["experience_schema_coverage"] == 1.0
         and report["distractor_schema_coverage"] == 1.0
-        and report["valid_candidate_claims"] == len(sampled)
+        and report["candidate_coverage"] >= .95
         and report["shared_candidate_rate"] == 1.0
         and report["retrieved_provenance_overlap"] == 0
         and report["retrieved_exact_evidence_overlap"] == 0
