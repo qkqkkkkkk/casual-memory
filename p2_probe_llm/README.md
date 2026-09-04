@@ -180,6 +180,21 @@ python -m p2_probe_llm.plot_results \
 
 The output file is `fig1_llm_scatter.png`.
 
+To diagnose a completed E1 run without making new model calls:
+
+```bash
+python -m p2_probe_llm.diagnose_e1 \
+  --results-dir results/fever_p2_llm_e1_pilot_v1 \
+  --experience-bank data/fever/experience_bank_e1_v1.jsonl \
+  --test results/fever_difficulty_e1_qwen7b_v1/fever_dev_selected_difficulty.jsonl \
+  --limit 20
+```
+
+The important fields are `a1_memory_id_changed`, `a1_round1_verdict_changed`,
+and `a1_solo_verdict_changed`. If the first is zero, the intervention is not
+being applied. If only the first is nonzero, the model received different
+memories but did not change its binary answer.
+
 Only after the pilot passes `gate_report.md` should E1 be expanded toward
 `--claims 240 --repeats 32`. Increasing `--audit-top-n` multiplies cost and
 should be done only after screening or budgeting.
