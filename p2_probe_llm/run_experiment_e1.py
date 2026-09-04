@@ -15,11 +15,12 @@ from pathlib import Path
 from typing import Any
 
 from .client import CachedChat
-from .mas import run_episode
-from .retrieval import BM25Index, role_query, tokenize
+from .mas import _render_memory, run_episode
+from .retrieval import BM25Index, GMemorySemanticIndex, role_query, tokenize
 from .stats import bh_reject, cluster_paired_effect, cluster_rate_ci, effect, paired_sign_pvalue
 
 AGENTS = ("A1", "A2", "A3")
+MEMORY_SCHEMA = "gmemory-fever-v2"
 
 
 def load(path: Path, binary: bool = True) -> list[dict[str, Any]]:
@@ -48,6 +49,10 @@ def _claim_key(item: dict[str, Any]) -> str:
     return _norm_text(item.get("claim", ""))
 
 
+def schema_coverage(bank: list[dict[str, Any]]) -> float:
+    return sum(item.get("memory_schema_version") == MEMORY_SCHEMA for item in bank) / max(1, len(bank))
+
+
 def memory_is_eligible(claim: dict[str, Any], item: dict[str, Any]) -> bool:
     """Reject a memory that supplied a distractor or exact evidence sentence."""
     forbidden = {str(value) for value in claim.get("evidence_policy", {}).get("distractor_source_ids", [])}
@@ -68,18 +73,26 @@ def select_claims(rows: list[dict[str, Any]], n: int, seed: int) -> list[dict[st
     return chosen
 
 
-def retrieve(claim: dict[str, Any], bank: list[dict[str, Any]], aid: str, k: int, index: BM25Index | None = None) -> list[dict[str, Any]]:
+def retrieve(claim: dict[str, Any], bank: list[dict[str, Any]], aid: str, k: int, index: BM25Index | GMemorySemanticIndex | None = None) -> list[dict[str, Any]]:
     if not bank or k <= 0:
         return []
     index = index or BM25Index(bank)
     query, label_bias = role_query(claim, aid)
-    ranked = index.search(query, k=len(bank), label_bias=label_bias)
-    return [item for item in ranked if memory_is_eligible(claim, item)][:k]
+    ranked = index.search_with_scores(query, k=len(bank), label_bias=label_bias)
+    eligible = [
+        (rank, item, score)
+        for rank, (item, score) in enumerate(ranked, 1)
+        if memory_is_eligible(claim, item)
+    ]
+    return [
+        dict(item, retrieval_score=score, retrieval_rank=rank)
+        for rank, item, score in eligible[:k]
+    ]
 
 
 def placebo(item: dict[str, Any], bank: list[dict[str, Any]], max_similarity: float = .15, max_token_ratio: float = .10, forbidden_evidence: set[str] | None = None) -> dict[str, Any]:
     """Choose an unrelated, length-matched bank item; invalid matches are never used."""
-    source_len = len(json.dumps(item, ensure_ascii=False).split())
+    source_len = len(_render_memory(item).split())
     scored: list[tuple[float, float, str, dict[str, Any]]] = []
     for candidate in bank:
         if candidate.get("memory_id") == item.get("memory_id"):
@@ -87,19 +100,22 @@ def placebo(item: dict[str, Any], bank: list[dict[str, Any]], max_similarity: fl
         if forbidden_evidence and (_evidence_texts(candidate) & forbidden_evidence):
             continue
         similarity = lexical_similarity(item.get("claim", ""), candidate.get("claim", ""))
-        length = len(json.dumps(candidate, ensure_ascii=False).split())
+        rendered_candidate = dict(candidate)
+        rendered_candidate.update({
+            "memory_id": "placebo-" + str(item.get("memory_id")),
+            "rationale_digest": "Format-matched unrelated FEVER precedent.",
+        })
+        length = len(_render_memory(rendered_candidate).split())
         ratio = abs(length - source_len) / max(1, source_len)
-        scored.append((similarity, ratio, str(candidate.get("memory_id", "")), candidate))
+        scored.append((similarity, ratio, str(candidate.get("memory_id", "")), rendered_candidate))
     if not scored:
         replacement = dict(item)
         replacement.update({"memory_id": "placebo-" + str(item.get("memory_id")), "rationale_digest": "Unrelated precedent unavailable.", "placebo_valid": False, "placebo_similarity": 1.0, "placebo_token_ratio": 1.0})
         return replacement
     eligible = [row for row in scored if row[0] < max_similarity and row[1] <= max_token_ratio]
-    similarity, ratio, _, target = min(eligible or scored, key=lambda row: (row[0], row[1], row[2]))
-    replacement = dict(target)
+    similarity, ratio, _, replacement = min(eligible or scored, key=lambda row: (row[0], row[1], row[2]))
+    replacement = dict(replacement)
     replacement.update({
-        "memory_id": "placebo-" + str(item.get("memory_id")),
-        "rationale_digest": "Format-matched unrelated FEVER precedent.",
         "placebo_for": item.get("memory_id"),
         "placebo_similarity": float(similarity), "placebo_token_ratio": float(ratio),
         "placebo_valid": bool(eligible),
@@ -133,6 +149,8 @@ def main() -> None:
     parser.add_argument("--endpoint", default="http://127.0.0.1:11434/v1")
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--model", default="qwen2.5:7b")
+    parser.add_argument("--embedding-model", default="sentence-transformers/all-MiniLM-L6-v2", help="Same SentenceTransformer model used by G-Memory retrieval")
+    parser.add_argument("--retrieval-threshold", type=float, default=0.3, help="Cosine threshold matching G-Memory retrieval")
     parser.add_argument("--claims", type=int, default=20)
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--top-k", type=int, choices=(1,), default=1, help="E1 is fixed to top-1")
@@ -154,6 +172,8 @@ def main() -> None:
         raise SystemExit("No eligible claims found in --test")
     if not experience_bank or not distractor_bank:
         raise SystemExit("Both experience and distractor banks must contain evidence-bearing items")
+    if schema_coverage(experience_bank) != 1.0 or schema_coverage(distractor_bank) != 1.0:
+        raise SystemExit("Banks use the old memory schema; rebuild both with the current build_pools command")
     experience_sources = {source for item in experience_bank for source in _memory_source_keys(item)}
     distractor_sources = {source for item in distractor_bank for source in _memory_source_keys(item)}
     if experience_sources & distractor_sources:
@@ -164,10 +184,9 @@ def main() -> None:
 
     experience_md5 = hashlib.md5(args.experience_bank.read_bytes()).hexdigest()
     distractor_md5 = hashlib.md5(args.distractor_bank.read_bytes()).hexdigest()
-    config_md5 = hashlib.md5(json.dumps({"model": args.model, "claims": args.claims, "repeats": args.repeats, "top_k": args.top_k, "audit_top_n": args.audit_top_n, "seed": args.seed, "endpoint": args.endpoint, "retrieval": "bm25_claim_only", "experiment": "E1"}, sort_keys=True).encode()).hexdigest()
+    config_md5 = hashlib.md5(json.dumps({"model": args.model, "claims": args.claims, "repeats": args.repeats, "top_k": args.top_k, "audit_top_n": args.audit_top_n, "seed": args.seed, "endpoint": args.endpoint, "retrieval": "gmemory_semantic_claim", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "experiment": "E1"}, sort_keys=True).encode()).hexdigest()
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
-    index = BM25Index(experience_bank)
-    placebo_lookup: dict[str, dict[str, Any]] = {}
+    index = GMemorySemanticIndex(experience_bank, args.embedding_model, args.retrieval_threshold)
     log_path = args.output_dir / "episode_runs.jsonl"
     try:
         log_path.open("x", encoding="utf-8").close()
@@ -176,20 +195,34 @@ def main() -> None:
 
     all_runs: list[dict[str, Any]] = []
     summary: list[dict[str, Any]] = []
-    excluded_invalid_placebo = excluded_provenance = excluded_exact_evidence = 0
+    excluded_invalid_placebo = excluded_no_eligible_memory = excluded_exact_evidence = 0
     candidate_diagnostics: list[dict[str, Any]] = []
     for claim in claims:
-        candidates = {aid: retrieve(claim, experience_bank, aid, args.top_k, index) for aid in AGENTS}
+        shared_candidates = retrieve(claim, experience_bank, "A1", args.top_k, index)
+        candidates = {aid: list(shared_candidates) for aid in AGENTS}
         if any(not candidates[aid] for aid in AGENTS):
-            excluded_provenance += 1
+            excluded_no_eligible_memory += 1
             continue
         for aid in AGENTS:
-            candidate_diagnostics.append({"claim_id": str(claim["id"]), "agent_id": aid, "memory_id": candidates[aid][0]["memory_id"], "eligible": memory_is_eligible(claim, candidates[aid][0])})
+            candidate_diagnostics.append({
+                "claim_id": str(claim["id"]),
+                "agent_id": aid,
+                "memory_id": candidates[aid][0]["memory_id"],
+                "retrieval_score": candidates[aid][0].get("retrieval_score"),
+                "retrieval_rank": candidates[aid][0].get("retrieval_rank"),
+                "eligible": memory_is_eligible(claim, candidates[aid][0]),
+            })
         item = candidates["A1"][0]
         if not memory_is_eligible(claim, item):
             excluded_exact_evidence += 1
             continue
-        placebo_lookup.setdefault(str(item["memory_id"]), placebo(item, experience_bank, forbidden_evidence=_evidence_texts(claim)))
+        # A placebo is claim-specific because its evidence must also be
+        # disjoint from this claim's evidence bundle.
+        placebo_lookup = {
+            str(item["memory_id"]): placebo(
+                item, experience_bank, forbidden_evidence=_evidence_texts(claim)
+            )
+        }
         if not placebo_lookup[str(item["memory_id"])].get("placebo_valid", False):
             excluded_invalid_placebo += 1
             continue
@@ -234,20 +267,45 @@ def main() -> None:
     aggregate = {key: dict(zip(("estimate", "ci"), cluster_paired_effect([row[f"{key}_diffs"] for row in summary], args.bootstrap, args.seed + offset))) for key, offset in (("local_b", 10), ("local_a", 11), ("team", 12), ("round1_team", 13), ("round2_increment", 14))}
     comparable = [row for row in summary if row["local_a"] != 0 and row["local_b"] != 0]
     sign_agreement = sum((row["local_a"] > 0) == (row["local_b"] > 0) for row in comparable) / len(comparable) if comparable else None
+    a1_memory_use = {}
+    for branch in ("control", "treated"):
+        values = [run["round1"]["A1"] for run in all_runs if run["branch"] == branch]
+        a1_memory_use[branch] = {
+            "runs": len(values),
+            "completion_rate": sum(bool(value.get("memory_considered")) for value in values) / max(1, len(values)),
+            "high_relevance_rate": sum(value.get("memory_relevance") == "HIGH" for value in values) / max(1, len(values)),
+            "adopted_or_partial_rate": sum(value.get("memory_influence") in {"ADOPTED", "PARTIAL"} for value in values) / max(1, len(values)),
+            "rejected_rate": sum(value.get("memory_influence") == "REJECTED" for value in values) / max(1, len(values)),
+        }
+    retrieval_scores = [
+        float(row["retrieval_score"])
+        for row in candidate_diagnostics
+        if row["agent_id"] == "A1" and row.get("retrieval_score") is not None
+    ]
+    retrieval_score_summary = {
+        "min": min(retrieval_scores, default=None),
+        "mean": sum(retrieval_scores) / len(retrieval_scores) if retrieval_scores else None,
+        "max": max(retrieval_scores, default=None),
+    }
     result: dict[str, Any] = {
-        "experiment": "p2_probe_real_llm_E1", "benchmark": "FEVER_binary", "retrieval_method": "bm25_claim_only", "model": args.model,
+        "experiment": "p2_probe_real_llm_E1", "benchmark": "FEVER_binary", "retrieval_method": "gmemory_semantic_claim", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "model": args.model,
         "n_claims": len(claims), "n_claims_input": len(claims), "n_claims_with_valid_audit": len({row["claim_id"] for row in summary}), "n_audit_units": len(summary), "repeats": args.repeats,
         "fdr_q": .1, "mismatch_count": len(mismatches), "mismatch_rate": len(mismatches) / len(summary) if summary else 0.0,
         "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3) if summary else [0.0, 0.0], "direction_i_count": sum(row["confirmed"] and row["classification"] == "local_positive_team_negative" for row in summary), "direction_ii_count": sum(row["confirmed"] and row["classification"] == "local_negative_team_positive" for row in summary), "undetermined_count": len(summary) - len(mismatches),
-        "excluded_invalid_placebo_units": excluded_invalid_placebo, "excluded_provenance_units": excluded_provenance, "excluded_exact_evidence_units": excluded_exact_evidence,
+        "excluded_invalid_placebo_units": excluded_invalid_placebo, "excluded_no_eligible_memory_units": excluded_no_eligible_memory, "excluded_exact_evidence_units": excluded_exact_evidence,
         "comparable_local_effect_units": len(comparable), "local_sign_agreement": sign_agreement, "cache_hits": client.cache_hits, "llm_calls": client.calls,
         "experience_bank_md5": experience_md5, "distractor_bank_md5": distractor_md5, "config_md5": config_md5, "candidate_diagnostics": candidate_diagnostics, "aggregate_effects": aggregate, "units": summary,
+        "a1_round1_memory_use": a1_memory_use, "retrieval_score_summary": retrieval_score_summary,
     }
 
     outputs = [output for run in all_runs for section in ("round1", "round2", "solo") for output in run.get(section, {}).values()]
     parse_rate = sum(bool(output.get("parse_fail")) for output in outputs) / max(1, len(outputs))
+    memory_considered_rate = sum(bool(output.get("memory_considered")) for output in outputs) / max(1, len(outputs))
     paired = list(zip(all_runs[::2], all_runs[1::2]))
-    unaffected_equal = all(control["round1"][aid] == treated["round1"][aid] for control, treated in paired for aid in ("A2", "A3"))
+    unaffected_equal = bool(paired) and all(control["round1"][aid] == treated["round1"][aid] for control, treated in paired for aid in ("A2", "A3"))
+    shared_retrieval = bool(all_runs) and all(len({tuple(run["candidates"][aid]) for aid in AGENTS}) == 1 for run in all_runs if run["branch"] == "treated")
+    result["memory_considered_rate"] = memory_considered_rate
+    result["shared_retrieval_profile"] = shared_retrieval
     diagnostics = [value for run in all_runs if run["branch"] == "control" for value in run["placebo_diagnostics"].values()]
     placebo_ok = bool(diagnostics) and all(value["similarity"] < .15 and value["token_ratio"] <= .10 for value in diagnostics)
     sign_text = f"{sign_agreement:.2%}" if sign_agreement is not None else "no units with both non-zero local effects"
@@ -256,11 +314,16 @@ def main() -> None:
         f"- Real evidence present for selected claims: {'PASS' if all(row.get('evidence_bundle') for row in claims) else 'FAIL'}\n"
         f"- Frozen experience-bank MD5 recorded: PASS (`{experience_md5}`)\n"
         f"- Frozen distractor-bank MD5 recorded: PASS (`{distractor_md5}`)\n"
-        f"- Retrieved memory provenance does not match claim distractors: {'PASS' if excluded_provenance == 0 else 'FAIL'} (excluded {excluded_provenance})\n"
+        f"- Eligible semantic top-1 found for every selected claim: {'PASS' if excluded_no_eligible_memory == 0 else 'FAIL'} (excluded {excluded_no_eligible_memory})\n"
         f"- Retrieved memory evidence has no exact claim-evidence overlap: {'PASS' if excluded_exact_evidence == 0 else 'FAIL'} (excluded {excluded_exact_evidence})\n"
         f"- Unaffected A2/A3 round-1 outputs identical across paired arms: {'PASS' if unaffected_equal else 'FAIL'}\n"
+        f"- One shared claim-level retrieval profile before intervention: {'PASS' if shared_retrieval else 'FAIL'}\n"
         f"- Placebo similarity < 0.15 and token difference <= 10%: {'PASS' if placebo_ok else 'FAIL'}\n"
         f"- Structured-output parse failure rate <= 0.5%: {'PASS' if parse_rate <= .005 else 'FAIL'} ({parse_rate:.4%})\n"
+        f"- Structured memory-use report completion rate >= 95%: {'PASS' if memory_considered_rate >= .95 else 'FAIL'} ({memory_considered_rate:.2%})\n"
+        f"- A1 treated memory adopted/partially adopted: {a1_memory_use['treated']['adopted_or_partial_rate']:.2%}\n"
+        f"- A1 control placebo adopted/partially adopted: {a1_memory_use['control']['adopted_or_partial_rate']:.2%}\n"
+        f"- Retrieved top-1 cosine score summary: `{retrieval_score_summary}`\n"
         f"- Local A/B sign agreement >= 80%: {'PASS' if sign_agreement is not None and sign_agreement >= .8 else 'NOT ESTIMABLE' if sign_agreement is None else 'FAIL'} ({sign_text})\n"
         "- BH-FDR correction q=0.1 applied: PASS\n"
         f"- Confirmed mismatch: **{len(mismatches)} / {len(summary)} ({result['mismatch_rate']:.3%})**\n"
@@ -269,7 +332,7 @@ def main() -> None:
     )
     (args.output_dir / "gate_report.md").write_text(gate, encoding="utf-8")
     (args.output_dir / "mismatch_rate.json").write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps({key: result[key] for key in ("n_claims", "n_claims_with_valid_audit", "n_audit_units", "mismatch_count", "mismatch_rate", "undetermined_count", "excluded_invalid_placebo_units", "excluded_provenance_units", "excluded_exact_evidence_units", "comparable_local_effect_units", "local_sign_agreement", "cache_hits", "llm_calls")}, indent=2))
+    print(json.dumps({key: result[key] for key in ("n_claims", "n_claims_with_valid_audit", "n_audit_units", "mismatch_count", "mismatch_rate", "undetermined_count", "excluded_invalid_placebo_units", "excluded_no_eligible_memory_units", "excluded_exact_evidence_units", "comparable_local_effect_units", "local_sign_agreement", "cache_hits", "llm_calls")}, indent=2))
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from .client import CachedChat
 ROLES = {
     "A1": "Evidence Analyst: compare each evidence sentence with the claim literally; do not fill missing facts.",
     "A2": "Skeptic: actively search for contradictions and evidence gaps; do not accept a claim without support.",
-    "A3": "Precedent Reasoner: use historical precedents as a weak prior, but defer to the supplied evidence.",
+    "A3": "Precedent Reasoner: transfer the retrieved precedent carefully and resolve any conflict with current evidence.",
 }
 
 
@@ -35,8 +35,21 @@ def _parse_verdict(obj: dict[str, Any]) -> str:
 
 
 def _render_memory(item: dict[str, Any]) -> str:
-    evidence = " ".join(str(x.get("text", "")) for x in item.get("evidence_bundle", []))
-    return f"Memory {item['memory_id']}: precedent claim={item['claim']} | label={item['gold_label']} | evidence={evidence[:1200]} | note={item.get('rationale_digest','')}"
+    evidence = "\n".join(
+        f"- {x.get('title', 'unknown')}: {x.get('text', '')}"
+        for x in item.get("evidence_bundle", [])
+    )
+    description = item.get("task_description") or f"Claim: {item.get('claim', '')}"
+    key_steps = item.get("key_steps") or "Compare the historical evidence with its claim."
+    trajectory = item.get("task_trajectory") or f"Historical evidence reviewed:\n{evidence[:2400]}"
+    return (
+        f"### Reference case {item['memory_id']}\n"
+        f"Task description:\n{description}\n\n"
+        f"Key steps:\n{key_steps}\n\n"
+        f"Detailed trajectory:\n{trajectory}\n\n"
+        f"Recorded result: {item['gold_label']}\n"
+        f"Transfer note: {item.get('rationale_digest', '')}"
+    )
 
 
 def _jaccard(a: str, b: str) -> float:
@@ -60,11 +73,51 @@ def _make_placebo(target: dict[str, Any], candidates: dict[str, list[dict[str, A
 def _prompt(role: str, claim: dict[str, Any], memories: list[dict[str, Any]], peers: str = "", context_heading: str = "Other agents' round-1 statements") -> list[dict[str, str]]:
     evidence = "\n".join(f"- {x.get('title','unknown')}: {x.get('text','')}" for x in claim.get("evidence_bundle", [])) or "(no resolved evidence)"
     memory_text = "\n".join(_render_memory(x) for x in memories) or "(no memory)"
-    system = f"You are {role}. Return JSON only: {{\"verdict\": \"SUPPORTS\" or \"REFUTES\", \"confidence\": number, \"rationale\": string}}."
-    user = f"Claim: {claim['claim']}\nEvidence:\n{evidence}\nRetrieved memories:\n{memory_text}\n"
+    system = (
+        f"You are {role}. Return JSON only: "
+        "{\"memory_relevance\": \"HIGH\" or \"MEDIUM\" or \"LOW\", "
+        "\"memory_influence\": \"ADOPTED\" or \"PARTIAL\" or \"REJECTED\", "
+        "\"memory_assessment\": string, \"verdict\": \"SUPPORTS\" or \"REFUTES\", "
+        "\"confidence\": number, \"rationale\": string}. "
+        "All three memory fields are required."
+    )
+    user = (
+        "## Successful historical example (PRIMARY REFERENCE; MANDATORY TO CONSIDER)\n"
+        "Start your analysis from this retrieved case. Compare its claim relation, evidence pattern, key steps, and recorded result with the current task. "
+        "Use it as a strong but defeasible prior: transfer it when the fact pattern is analogous, and explicitly reject or limit it when the current evidence conflicts. "
+        "Do not ignore it, but do not copy its verdict merely because its wording is similar.\n"
+        f"{memory_text}\n\n"
+        f"## Your current task\nClaim: {claim['claim']}\nEvidence:\n{evidence}\n"
+    )
     if peers: user += f"{context_heading}:\n{peers}\n"
-    user += "Decide whether the claim is supported or refuted. Use only the evidence and memories above."
+    user += (
+        "First fill memory_relevance, memory_influence, and memory_assessment. "
+        "Then decide whether the current claim is supported or refuted. In the rationale, state exactly how the reference case affected or failed to affect your decision."
+    )
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
+def _agent_output(obj: dict[str, Any], gold_label: str) -> dict[str, Any]:
+    verdict = _parse_verdict(obj)
+    assessment = str(obj.get("memory_assessment", "")).strip()
+    relevance = str(obj.get("memory_relevance", "")).upper().strip()
+    influence = str(obj.get("memory_influence", "")).upper().strip()
+    considered = (
+        bool(assessment)
+        and relevance in {"HIGH", "MEDIUM", "LOW"}
+        and influence in {"ADOPTED", "PARTIAL", "REJECTED"}
+    )
+    return {
+        "verdict": verdict,
+        "confidence": obj.get("confidence"),
+        "rationale": str(obj.get("rationale", "")),
+        "memory_relevance": relevance,
+        "memory_influence": influence,
+        "memory_assessment": assessment,
+        "memory_considered": considered,
+        "correct": verdict == gold_label,
+        "parse_fail": obj["_parse_fail"],
+    }
 
 
 def run_episode(client: CachedChat, claim: dict[str, Any], candidates: dict[str, list[dict[str, Any]]], repeat_idx: int, arm: str, audit_unit: tuple[str, str, str] | None = None, placebo_lookup: dict[str, dict[str, Any]] | None = None) -> Run:
@@ -80,19 +133,18 @@ def run_episode(client: CachedChat, claim: dict[str, Any], candidates: dict[str,
     r1 = {}; hits0 = client.cache_hits; calls0 = client.calls
     for aid in ("A1", "A2", "A3"):
         obj, _ = client.ask(_prompt(ROLES[aid], claim, actual[aid]), repeat_idx)
-        verdict = _parse_verdict(obj); r1[aid] = {"verdict": verdict, "confidence": obj.get("confidence"), "rationale": obj.get("rationale", ""), "correct": verdict == claim["label"], "parse_fail": obj["_parse_fail"]}
+        r1[aid] = _agent_output(obj, claim["label"])
     r2 = {}
     for aid in ("A1", "A2", "A3"):
         peers = "\n".join(f"{a}: {r1[a]['verdict']} ({r1[a]['rationale']})" for a in ("A1", "A2", "A3") if a != aid)
         obj, _ = client.ask(_prompt(ROLES[aid], claim, actual[aid], peers), repeat_idx)
-        verdict = _parse_verdict(obj); r2[aid] = {"verdict": verdict, "confidence": obj.get("confidence"), "rationale": obj.get("rationale", ""), "correct": verdict == claim["label"], "parse_fail": obj["_parse_fail"]}
+        r2[aid] = _agent_output(obj, claim["label"])
     solo = {}
     if audit_unit:
         aid = audit_unit[1]
         own = f"Your own initial statement: {r1[aid]['verdict']} ({r1[aid]['rationale']})"
         obj, _ = client.ask(_prompt(ROLES[aid], claim, actual[aid], own, "Self-refinement context"), repeat_idx)
-        verdict = _parse_verdict(obj)
-        solo[aid] = {"verdict": verdict, "confidence": obj.get("confidence"), "rationale": obj.get("rationale", ""), "correct": verdict == claim["label"], "parse_fail": obj["_parse_fail"]}
+        solo[aid] = _agent_output(obj, claim["label"])
     votes = [r2[a]["verdict"] for a in ("A1", "A2", "A3")]; team = max(set(votes), key=votes.count)
     return Run(
         claim_id=str(claim["id"]), arm=arm, repeat_idx=repeat_idx,

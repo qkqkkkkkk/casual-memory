@@ -2,12 +2,22 @@
 
 This package is intentionally separate from `p2_probe/`. It calls a real
 OpenAI-compatible chat model, scores exact FEVER labels, and never uses an
-LLM judge. The current study focuses on unilateral E1 interventions:
-`run_experiment.py` changes only A1's top-1 memory and measures local versus
-team effects. E2 remains in the repository but is intentionally not part of
-this run. Retrieval is a deterministic, dependency-free BM25 index with fixed
-role queries; placebo diagnostics use lexical overlap only to verify
-dissimilarity.
+LLM judge. The current study focuses on unilateral E1 interventions. Its
+memory layer follows G-Memory's frozen precedent pattern: each historical
+`task_main` is embedded with `sentence-transformers/all-MiniLM-L6-v2`, candidates
+are ranked by cosine similarity, and the same claim-level candidates are
+available to all roles. FEVER labels remain metadata rather than a retrieval
+filter. E1 changes only A1's top-1 memory and measures local versus team
+effects. E2 remains in the repository but is intentionally not part of this
+run.
+
+This is a controlled G-Memory adaptation, not a claim that the full G-Memory
+graph has been copied. It reuses successful reference-case records,
+`task_main` cosine retrieval, the `0.3` similarity threshold, and the
+reference-case-first prompt. It intentionally omits query/insight graphs,
+continual writes, and success/failure retrieval buckets. Those components
+would change memory during the experiment, while FEVER's `SUPPORTS` and
+`REFUTES` labels are answers rather than G-Memory success/failure outcomes.
 
 ## 1. Obtain official FEVER resources
 
@@ -59,38 +69,46 @@ directory or the dump format does not match.
 python -m p2_probe_llm.build_pools \
   --input data/fever/fever_train_enriched.jsonl \
   --exclude-claims-from data/fever/fever_dev_enriched.jsonl \
-  --experience-output data/fever/experience_bank.jsonl \
-  --distractor-output data/fever/distractor_pool.jsonl \
+  --experience-output data/fever/experience_bank_gmemory_v2.jsonl \
+  --distractor-output data/fever/distractor_pool_gmemory_v2.jsonl \
   --max-experience-items 2000 --max-distractor-items 4000 \
   --seed 42
 ```
 
-The experience bank is used only for retrieval. The disjoint distractor pool
-is used only to construct the selected evidence bundles. Both hashes are
+The command writes schema `gmemory-fever-v2`. Older E1 pools must not be
+reused. The experience bank is used only for retrieval. The disjoint
+distractor pool is used only to construct the selected evidence bundles. Both hashes are
 recorded in every E1 result.
 
-Validate all inputs before starting the model:
-
-```bash
-python -m p2_probe_llm.validate_inputs \
-  --test data/fever/fever_dev_enriched.jsonl \
-  --experience-bank data/fever/experience_bank.jsonl \
-  --distractor-bank data/fever/distractor_pool.jsonl \
-  --sample-claims 100 --top-k 1
-```
-
-Do not spend LLM calls unless this command reports `"pass": true`.
-
-## 4. Start a model server
-
-The probe itself uses only the Python standard library. Create an isolated
-environment and install matplotlib only when figures are needed:
+Create an isolated environment and install the plotting and semantic-retrieval
+dependencies before running validation:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r p2_probe_llm/requirements.txt
 ```
+
+Validate all inputs before starting the model:
+
+```bash
+python -m p2_probe_llm.validate_inputs \
+  --test data/fever/fever_dev_enriched.jsonl \
+  --experience-bank data/fever/experience_bank_gmemory_v2.jsonl \
+  --distractor-bank data/fever/distractor_pool_gmemory_v2.jsonl \
+  --sample-claims 100 --top-k 1 \
+  --embedding-model sentence-transformers/all-MiniLM-L6-v2 \
+  --retrieval-threshold 0.3 \
+  --output results/e1_input_validation_gmemory_v2.json
+```
+
+Do not spend LLM calls unless this command reports `"pass": true`.
+
+## 4. Start a model server
+
+The semantic retriever downloads the same embedding model used by G-Memory on
+its first run. On a cluster without direct Hugging Face access, set
+`HF_ENDPOINT` to the institution's mirror before validation.
 
 Ollama example:
 
@@ -120,10 +138,12 @@ Run the G0 cache gate before calibration or experiments:
 ```bash
 python -m p2_probe_llm.gate_determinism \
   --test data/fever/fever_dev_enriched.jsonl \
-  --experience-bank data/fever/experience_bank.jsonl \
+  --experience-bank data/fever/experience_bank_gmemory_v2.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b --top-k 1 \
-  --output-dir results/fever_p2_llm_g0
+  --embedding-model sentence-transformers/all-MiniLM-L6-v2 \
+  --retrieval-threshold 0.3 \
+  --output-dir results/fever_p2_llm_g0_gmemory_v2
 ```
 
 Do not continue unless it reports `"pass": true`.
@@ -137,12 +157,14 @@ placebo-team accuracy lies in `[0.62, 0.80]` and is closest to `0.70`:
 ```bash
 python -m p2_probe_llm.calibrate_difficulty \
   --test data/fever/fever_dev_enriched.jsonl \
-  --experience-bank data/fever/experience_bank.jsonl \
-  --distractor-bank data/fever/distractor_pool.jsonl \
+  --experience-bank data/fever/experience_bank_gmemory_v2.jsonl \
+  --distractor-bank data/fever/distractor_pool_gmemory_v2.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
   --claims 100 --repeats 1 --top-k 1 --seed 42 \
-  --output-dir results/fever_difficulty_qwen7b
+  --embedding-model sentence-transformers/all-MiniLM-L6-v2 \
+  --retrieval-threshold 0.3 \
+  --output-dir results/fever_difficulty_qwen7b_gmemory_v2
 ```
 
 Do not continue unless the report contains `"pass": true`. E1 must use the
@@ -154,14 +176,16 @@ E1 local/team mismatch:
 
 ```bash
 python -m p2_probe_llm.run_experiment \
-  --test results/fever_difficulty_qwen7b/fever_dev_selected_difficulty.jsonl \
-  --experience-bank data/fever/experience_bank.jsonl \
-  --distractor-bank data/fever/distractor_pool.jsonl \
+  --test results/fever_difficulty_qwen7b_gmemory_v2/fever_dev_selected_difficulty.jsonl \
+  --experience-bank data/fever/experience_bank_gmemory_v2.jsonl \
+  --distractor-bank data/fever/distractor_pool_gmemory_v2.jsonl \
   --endpoint http://127.0.0.1:11434/v1 \
   --model qwen2.5:7b \
   --claims 20 --repeats 8 --top-k 1 --audit-top-n 1 \
+  --embedding-model sentence-transformers/all-MiniLM-L6-v2 \
+  --retrieval-threshold 0.3 \
   --bootstrap 2000 --seed 42 \
-  --output-dir results/fever_p2_llm_e1_pilot
+  --output-dir results/fever_p2_llm_e1_gmemory_v2_pilot
 ```
 
 Each output directory must be new. The runner refuses to overwrite existing
@@ -174,8 +198,8 @@ Render the E1 scatter as a PNG after the pilot finishes:
 ```bash
 MPLBACKEND=Agg MPLCONFIGDIR=/tmp/cmi-mpl \
 python -m p2_probe_llm.plot_results \
-  --e1-dir results/fever_p2_llm_e1_pilot \
-  --output-dir results/fever_p2_llm_figures
+  --e1-dir results/fever_p2_llm_e1_gmemory_v2_pilot \
+  --output-dir results/fever_p2_llm_e1_gmemory_v2_figures
 ```
 
 The output file is `fig1_llm_scatter.png`.
@@ -184,16 +208,18 @@ To diagnose a completed E1 run without making new model calls:
 
 ```bash
 python -m p2_probe_llm.diagnose_e1 \
-  --results-dir results/fever_p2_llm_e1_pilot_v1 \
-  --experience-bank data/fever/experience_bank_e1_v1.jsonl \
-  --test results/fever_difficulty_e1_qwen7b_v1/fever_dev_selected_difficulty.jsonl \
+  --results-dir results/fever_p2_llm_e1_gmemory_v2_pilot \
+  --experience-bank data/fever/experience_bank_gmemory_v2.jsonl \
+  --test results/fever_difficulty_qwen7b_gmemory_v2/fever_dev_selected_difficulty.jsonl \
   --limit 20
 ```
 
 The important fields are `a1_memory_id_changed`, `a1_round1_verdict_changed`,
-and `a1_solo_verdict_changed`. If the first is zero, the intervention is not
-being applied. If only the first is nonzero, the model received different
-memories but did not change its binary answer.
+`a1_solo_verdict_changed`, and the `influence_*` counts. If the first is zero,
+the intervention is not being applied. If only the first is nonzero, the model
+received different memories but did not change its binary answer. Also inspect
+`retrieval_score_summary` and `a1_round1_memory_use` in `mismatch_rate.json`;
+they distinguish weak retrieval from a model that explicitly rejects memory.
 
 Only after the pilot passes `gate_report.md` should E1 be expanded toward
 `--claims 240 --repeats 32`. Increasing `--audit-top-n` multiplies cost and

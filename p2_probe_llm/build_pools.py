@@ -23,12 +23,44 @@ def write_pool(path: Path, rows: list[dict], pool: str) -> str:
     with path.open("x", encoding="utf-8") as handle:
         for idx, row in enumerate(rows):
             source_id = row.get("id", idx)
+            evidence_lines = [
+                f"- {item.get('title', 'unknown')}: {item.get('text', '')}"
+                for item in row["evidence_bundle"]
+            ]
+            evidence = "\n".join(evidence_lines)[:2400]
+            # G-Memory retrieves task_main against the new task, then injects
+            # task_description, key_steps, and trajectory as a reference case.
+            # FEVER is a one-step task, so these fields are built
+            # deterministically from the gold training record and then frozen.
+            task_main = str(row["claim"])
+            task_description = (
+                "Determine whether the historical FEVER claim is supported or "
+                f"refuted by its evidence.\nClaim: {row['claim']}"
+            )
+            key_steps = (
+                "1. Identify the factual relation asserted by the claim.\n"
+                "2. Compare that relation with the supplied historical evidence.\n"
+                f"3. Return the historical verdict {row['label']}."
+            )
+            task_trajectory = (
+                f"Historical evidence reviewed:\n{evidence}\n"
+                f"Historical final verdict: {row['label']}"
+            )
             handle.write(json.dumps({
                 "memory_id": f"fever-train-{source_id}",
                 "claim": row["claim"],
                 "gold_label": row["label"],
                 "evidence_bundle": row["evidence_bundle"],
-                "rationale_digest": f"Historical FEVER precedent label: {row['label']}",
+                "task_main": task_main,
+                "task_description": task_description,
+                "key_steps": key_steps,
+                "task_trajectory": task_trajectory,
+                "rationale_digest": (
+                    "This is a successfully labeled historical case. Transfer its "
+                    "reasoning pattern only when the current fact pattern is analogous."
+                ),
+                "memory_schema_version": "gmemory-fever-v2",
+                "historical_success": True,
                 "source_example_id": source_id,
                 "source_pool": pool,
                 "is_synthetic": False,
@@ -93,6 +125,7 @@ def main() -> None:
         "pool_id_overlap": len(exp_ids & dis_ids),
         "experience_md5": exp_md5,
         "distractor_md5": dis_md5,
+        "memory_schema_version": "gmemory-fever-v2",
         "seed": args.seed,
         "outputs": [str(args.experience_output), str(args.distractor_output)],
     }
