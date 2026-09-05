@@ -14,7 +14,15 @@ def sim(a: str, b: str) -> float:
 def make_variant(claim: dict[str, Any], distractor_bank: list[dict[str, Any]], gold_recall: float, seed: int, max_sentences: int = 5) -> dict[str, Any]:
     digest = hashlib.sha256(f"{seed}|{claim['id']}".encode()).hexdigest()
     include_gold = int(digest[:16], 16) / (16 ** 16) < gold_recall
-    bundle = list(claim.get("evidence_bundle", []))[:2] if include_gold else []
+    # Preserve the provenance of the evidence shown to the model.  The
+    # experiment later scores the model's selected evidence IDs against these
+    # flags, so do not infer gold status from the position in the bundle.
+    bundle = []
+    if include_gold:
+        for entry in list(claim.get("evidence_bundle", []))[:2]:
+            gold_entry = dict(entry)
+            gold_entry["is_gold"] = True
+            bundle.append(gold_entry)
     ranked = sorted((item for item in distractor_bank if item.get("claim") != claim.get("claim")), key=lambda item: (sim(claim["claim"], item.get("claim", "")), str(item.get("memory_id"))), reverse=True)
     seen = {entry.get("text") for entry in bundle}
     distractor_sources = []

@@ -123,7 +123,7 @@ def placebo(item: dict[str, Any], bank: list[dict[str, Any]], max_similarity: fl
     return replacement
 
 
-def _paired_effects(control: list[dict[str, Any]], treated: list[dict[str, Any]]) -> dict[str, list[int]]:
+def _paired_effects(control: list[dict[str, Any]], treated: list[dict[str, Any]]) -> dict[str, list[int] | list[float | None]]:
     if len(control) != len(treated):
         raise ValueError("Control and treated repeats are not paired")
     local_b = [int(t["per_agent_correct_r1"]["A1"]) - int(c["per_agent_correct_r1"]["A1"]) for c, t in zip(control, treated)]
@@ -133,12 +133,48 @@ def _paired_effects(control: list[dict[str, Any]], treated: list[dict[str, Any]]
     r1_treated = [sum(t["per_agent_correct_r1"].values()) >= 2 for t in treated]
     round1_team = [int(t) - int(c) for c, t in zip(r1_control, r1_treated)]
     increment = [team_delta - r1_delta for team_delta, r1_delta in zip(team, round1_team)]
-    return {"local_b": local_b, "local_a": local_a, "team": team, "round1_team": round1_team, "round2_increment": increment}
+    def paired_float(path: str, section: str = "round1") -> list[float | None]:
+        values: list[float | None] = []
+        for c, t in zip(control, treated):
+            c_value = c.get(section, {}).get("A1", {}).get(path)
+            t_value = t.get(section, {}).get("A1", {}).get(path)
+            values.append(float(t_value) - float(c_value) if c_value is not None and t_value is not None else None)
+        return values
+
+    team_evidence = [
+        float(t["team_evidence_f1"]) - float(c["team_evidence_f1"])
+        if c.get("team_evidence_f1") is not None and t.get("team_evidence_f1") is not None else None
+        for c, t in zip(control, treated)
+    ]
+    return {
+        "local_b": local_b,
+        "local_a": local_a,
+        "team": team,
+        "round1_team": round1_team,
+        "round2_increment": increment,
+        "local_evidence_f1": paired_float("evidence_f1", "round1"),
+        "local_solo_evidence_f1": paired_float("evidence_f1", "solo"),
+        "team_evidence_f1": team_evidence,
+    }
 
 
 def _effect(values: list[int], bootstrap: int, seed: int) -> dict[str, Any]:
     estimate, ci = effect(values, bootstrap, seed)
     return {"estimate": estimate, "ci": ci}
+
+
+def _optional_effect(values: list[float | None], bootstrap: int, seed: int) -> dict[str, Any]:
+    valid = [float(value) for value in values if value is not None]
+    result = {"estimate": None, "ci": [None, None], "n_valid_repeats": len(valid)}
+    if valid:
+        estimate, ci = effect(valid, bootstrap, seed)
+        result.update({"estimate": estimate, "ci": ci})
+    return result
+
+
+def _optional_pvalue(values: list[float | None]) -> float:
+    valid = [float(value) for value in values if value is not None]
+    return paired_sign_pvalue(valid) if valid else 1.0
 
 
 def main() -> None:
@@ -184,7 +220,7 @@ def main() -> None:
 
     experience_md5 = hashlib.md5(args.experience_bank.read_bytes()).hexdigest()
     distractor_md5 = hashlib.md5(args.distractor_bank.read_bytes()).hexdigest()
-    config_md5 = hashlib.md5(json.dumps({"model": args.model, "claims": args.claims, "repeats": args.repeats, "top_k": args.top_k, "audit_top_n": args.audit_top_n, "seed": args.seed, "endpoint": args.endpoint, "retrieval": "gmemory_semantic_claim", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "experiment": "E1"}, sort_keys=True).encode()).hexdigest()
+    config_md5 = hashlib.md5(json.dumps({"model": args.model, "claims": args.claims, "repeats": args.repeats, "top_k": args.top_k, "audit_top_n": args.audit_top_n, "seed": args.seed, "endpoint": args.endpoint, "retrieval": "gmemory_semantic_claim", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "experiment": "E1", "utility_metrics": "label_correctness_and_evidence_f1_v1"}, sort_keys=True).encode()).hexdigest()
     client = CachedChat(args.endpoint, args.model, args.output_dir / "llm_cache.sqlite", api_key=args.api_key)
     index = GMemorySemanticIndex(experience_bank, args.embedding_model, args.retrieval_threshold)
     log_path = args.output_dir / "episode_runs.jsonl"
@@ -247,24 +283,63 @@ def main() -> None:
         team = _effect(diffs["team"], args.bootstrap, args.seed + ordinal + 2)
         r1 = _effect(diffs["round1_team"], args.bootstrap, args.seed + ordinal + 3)
         inc = _effect(diffs["round2_increment"], args.bootstrap, args.seed + ordinal + 4)
+        local_evidence = _optional_effect(diffs["local_evidence_f1"], args.bootstrap, args.seed + ordinal + 5)
+        solo_evidence = _optional_effect(diffs["local_solo_evidence_f1"], args.bootstrap, args.seed + ordinal + 6)
+        team_evidence = _optional_effect(diffs["team_evidence_f1"], args.bootstrap, args.seed + ordinal + 7)
         classification = "local_positive_team_negative" if b["estimate"] > 0 and team["estimate"] < 0 else "local_negative_team_positive" if b["estimate"] < 0 and team["estimate"] > 0 else "other"
+        evidence_classification = "other"
+        if local_evidence["estimate"] is not None and team_evidence["estimate"] is not None:
+            evidence_classification = (
+                "local_evidence_positive_team_negative" if local_evidence["estimate"] > 0 and team_evidence["estimate"] < 0
+                else "local_evidence_negative_team_positive" if local_evidence["estimate"] < 0 and team_evidence["estimate"] > 0
+                else "other"
+            )
         summary.append({
             "claim_id": str(claim["id"]), "agent_id": "A1", "memory_id": str(item["memory_id"]),
             "local_b": b["estimate"], "local_b_ci": b["ci"], "local_a": a["estimate"], "local_a_ci": a["ci"],
             "team": team["estimate"], "team_ci": team["ci"], "round1_team": r1["estimate"], "round1_team_ci": r1["ci"],
             "round2_increment": inc["estimate"], "round2_increment_ci": inc["ci"],
+            "local_evidence_f1": local_evidence["estimate"], "local_evidence_f1_ci": local_evidence["ci"],
+            "local_evidence_f1_n_valid_repeats": local_evidence["n_valid_repeats"],
+            "local_solo_evidence_f1": solo_evidence["estimate"], "local_solo_evidence_f1_ci": solo_evidence["ci"],
+            "team_evidence_f1": team_evidence["estimate"], "team_evidence_f1_ci": team_evidence["ci"],
+            "team_evidence_f1_n_valid_repeats": team_evidence["n_valid_repeats"],
             "local_b_diffs": diffs["local_b"], "local_a_diffs": diffs["local_a"], "team_diffs": diffs["team"],
             "round1_team_diffs": diffs["round1_team"], "round2_increment_diffs": diffs["round2_increment"],
-            "local_p": paired_sign_pvalue(diffs["local_b"]), "team_p": paired_sign_pvalue(diffs["team"]), "classification": classification,
+            "local_evidence_f1_diffs": diffs["local_evidence_f1"],
+            "local_solo_evidence_f1_diffs": diffs["local_solo_evidence_f1"],
+            "team_evidence_f1_diffs": diffs["team_evidence_f1"],
+            "local_p": paired_sign_pvalue(diffs["local_b"]), "team_p": paired_sign_pvalue(diffs["team"]),
+            "local_evidence_p": _optional_pvalue(diffs["local_evidence_f1"]),
+            "team_evidence_p": _optional_pvalue(diffs["team_evidence_f1"]),
+            "classification": classification, "evidence_classification": evidence_classification,
         })
 
     local_reject = bh_reject([row["local_p"] for row in summary])
     team_reject = bh_reject([row["team_p"] for row in summary])
+    local_evidence_reject = bh_reject([row["local_evidence_p"] for row in summary])
+    team_evidence_reject = bh_reject([row["team_evidence_p"] for row in summary])
     for row, local_ok, team_ok in zip(summary, local_reject, team_reject):
         opposite = (row["local_b_ci"][0] > 0 and row["team_ci"][1] < 0) or (row["local_b_ci"][1] < 0 and row["team_ci"][0] > 0)
         row["local_bh_reject"] = local_ok; row["team_bh_reject"] = team_ok; row["confirmed"] = bool(local_ok and team_ok and opposite)
+    for row, local_ok, team_ok in zip(summary, local_evidence_reject, team_evidence_reject):
+        evidence_opposite = False
+        if row["local_evidence_f1"] is not None and row["team_evidence_f1"] is not None:
+            evidence_opposite = (
+                (row["local_evidence_f1_ci"][0] is not None and row["local_evidence_f1_ci"][0] > 0 and row["team_evidence_f1_ci"][1] is not None and row["team_evidence_f1_ci"][1] < 0)
+                or (row["local_evidence_f1_ci"][1] is not None and row["local_evidence_f1_ci"][1] < 0 and row["team_evidence_f1_ci"][0] is not None and row["team_evidence_f1_ci"][0] > 0)
+            )
+        row["local_evidence_bh_reject"] = local_ok
+        row["team_evidence_bh_reject"] = team_ok
+        row["evidence_confirmed"] = bool(row["local_evidence_f1_n_valid_repeats"] and local_ok and team_ok and evidence_opposite)
     mismatches = [row for row in summary if row["confirmed"]]
     aggregate = {key: dict(zip(("estimate", "ci"), cluster_paired_effect([row[f"{key}_diffs"] for row in summary], args.bootstrap, args.seed + offset))) for key, offset in (("local_b", 10), ("local_a", 11), ("team", 12), ("round1_team", 13), ("round2_increment", 14))}
+    evidence_aggregate: dict[str, dict[str, Any]] = {}
+    for key, offset in (("local_evidence_f1", 15), ("local_solo_evidence_f1", 16), ("team_evidence_f1", 17)):
+        valid_units = [[float(value) for value in row[f"{key}_diffs"] if value is not None] for row in summary]
+        valid_units = [values for values in valid_units if values]
+        estimate, ci = cluster_paired_effect(valid_units, args.bootstrap, args.seed + offset)
+        evidence_aggregate[key] = {"estimate": estimate, "ci": ci, "n_valid_units": len(valid_units)}
     comparable = [row for row in summary if row["local_a"] != 0 and row["local_b"] != 0]
     sign_agreement = sum((row["local_a"] > 0) == (row["local_b"] > 0) for row in comparable) / len(comparable) if comparable else None
     a1_memory_use = {}
@@ -288,14 +363,16 @@ def main() -> None:
         "max": max(retrieval_scores, default=None),
     }
     eligible_memory_coverage = len({row["claim_id"] for row in summary}) / max(1, len(claims))
+    evidence_valid_units = sum(row["local_evidence_f1_n_valid_repeats"] > 0 for row in summary)
+    evidence_mismatch_count = sum(row["evidence_confirmed"] for row in summary)
     result: dict[str, Any] = {
-        "experiment": "p2_probe_real_llm_E1", "benchmark": "FEVER_binary", "retrieval_method": "gmemory_semantic_claim", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "model": args.model,
+        "experiment": "p2_probe_real_llm_E1", "benchmark": "FEVER_binary", "retrieval_method": "gmemory_semantic_claim", "utility_metrics": "label_correctness_and_evidence_f1_v1", "team_evidence_aggregation": "union_of_round2_agent_evidence_ids", "embedding_model": args.embedding_model, "retrieval_threshold": args.retrieval_threshold, "model": args.model,
         "n_claims": len(claims), "n_claims_input": len(claims), "n_claims_with_valid_audit": len({row["claim_id"] for row in summary}), "n_audit_units": len(summary), "repeats": args.repeats,
         "fdr_q": .1, "mismatch_count": len(mismatches), "mismatch_rate": len(mismatches) / len(summary) if summary else 0.0,
         "mismatch_rate_ci": cluster_rate_ci(summary, args.bootstrap, args.seed + 3) if summary else [0.0, 0.0], "direction_i_count": sum(row["confirmed"] and row["classification"] == "local_positive_team_negative" for row in summary), "direction_ii_count": sum(row["confirmed"] and row["classification"] == "local_negative_team_positive" for row in summary), "undetermined_count": len(summary) - len(mismatches),
         "eligible_memory_coverage": eligible_memory_coverage, "excluded_invalid_placebo_units": excluded_invalid_placebo, "excluded_no_eligible_memory_units": excluded_no_eligible_memory, "excluded_exact_evidence_units": excluded_exact_evidence,
         "comparable_local_effect_units": len(comparable), "local_sign_agreement": sign_agreement, "cache_hits": client.cache_hits, "llm_calls": client.calls,
-        "experience_bank_md5": experience_md5, "distractor_bank_md5": distractor_md5, "config_md5": config_md5, "candidate_diagnostics": candidate_diagnostics, "aggregate_effects": aggregate, "units": summary,
+        "experience_bank_md5": experience_md5, "distractor_bank_md5": distractor_md5, "config_md5": config_md5, "candidate_diagnostics": candidate_diagnostics, "aggregate_effects": aggregate, "aggregate_evidence_effects": evidence_aggregate, "evidence_mismatch_count": evidence_mismatch_count, "evidence_mismatch_rate": evidence_mismatch_count / max(1, evidence_valid_units), "evidence_comparable_units": evidence_valid_units, "units": summary,
         "a1_round1_memory_use": a1_memory_use, "retrieval_score_summary": retrieval_score_summary,
     }
 
@@ -330,10 +407,13 @@ def main() -> None:
         f"- Confirmed mismatch: **{len(mismatches)} / {len(summary)} ({result['mismatch_rate']:.3%})**\n"
         f"- Aggregate local B effect: `{aggregate['local_b']}`\n"
         f"- Aggregate team effect: `{aggregate['team']}`\n"
+        f"- Evidence-F1 mismatch (local positive, team negative or reverse): **{result['evidence_mismatch_count']} / {result['evidence_comparable_units']} ({result['evidence_mismatch_rate']:.3%})**\n"
+        f"- Aggregate A1 round-1 evidence F1 effect: `{evidence_aggregate['local_evidence_f1']}`\n"
+        f"- Aggregate team evidence F1 effect: `{evidence_aggregate['team_evidence_f1']}`\n"
     )
     (args.output_dir / "gate_report.md").write_text(gate, encoding="utf-8")
     (args.output_dir / "mismatch_rate.json").write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps({key: result[key] for key in ("n_claims", "n_claims_with_valid_audit", "n_audit_units", "mismatch_count", "mismatch_rate", "undetermined_count", "excluded_invalid_placebo_units", "excluded_no_eligible_memory_units", "excluded_exact_evidence_units", "comparable_local_effect_units", "local_sign_agreement", "cache_hits", "llm_calls")}, indent=2))
+    print(json.dumps({key: result[key] for key in ("n_claims", "n_claims_with_valid_audit", "n_audit_units", "mismatch_count", "mismatch_rate", "evidence_mismatch_count", "evidence_mismatch_rate", "evidence_comparable_units", "undetermined_count", "excluded_invalid_placebo_units", "excluded_no_eligible_memory_units", "excluded_exact_evidence_units", "comparable_local_effect_units", "local_sign_agreement", "cache_hits", "llm_calls")}, indent=2))
 
 
 if __name__ == "__main__":

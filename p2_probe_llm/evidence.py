@@ -94,7 +94,7 @@ def enrich_split(input_path: Path, wiki_path: Path, output_path: Path, max_sente
             for title, line_id in evidence_refs(raw):
                 sentence = index.get(title, line_id)
                 if sentence:
-                    bundle.append({"title": title, "line_id": line_id, "text": sentence})
+                    bundle.append({"title": title, "line_id": line_id, "text": sentence, "is_gold": True})
             label = raw.get("label")
             found += int(bool(bundle))
             if label in {"SUPPORTS", "REFUTES"}:

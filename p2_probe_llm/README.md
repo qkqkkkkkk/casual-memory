@@ -207,6 +207,21 @@ python -m p2_probe_llm.plot_results \
 
 The output file is `fig1_llm_scatter.png`.
 
+The runner also asks each agent to select the displayed current-evidence IDs
+(`E1`, `E2`, ...). When the selected difficulty variant contains at least one
+gold evidence sentence, it reports deterministic evidence precision, recall,
+and F1. `local_evidence_f1` is A1's round-1 treated-minus-control effect;
+`team_evidence_f1` is the corresponding effect for the union of the three
+round-2 agents' selected evidence. These are supplementary utilities: the
+binary FEVER label remains the primary task utility. Claims with no displayed
+gold evidence have `null` evidence effects and are excluded from evidence-F1
+aggregation. The second plot, `fig2_evidence_f1_scatter.png`, visualizes the
+evidence-level local/team effects when at least one such claim is present.
+
+Because the evidence labels are frozen into the selected difficulty JSONL,
+re-run `calibrate_difficulty` after installing this version before running E1;
+do not reuse a selected file produced by the older variant builder.
+
 To diagnose a completed E1 run without making new model calls:
 
 ```bash

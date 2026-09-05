@@ -22,6 +22,29 @@ def main() -> None:
     fig.savefig(args.output_dir / "fig1_llm_scatter.png", dpi=220, format="png")
     plt.close(fig)
 
+    evidence_rows = [
+        row for row in rows
+        if row.get("local_evidence_f1") is not None and row.get("team_evidence_f1") is not None
+    ]
+    if evidence_rows:
+        colors = ["#d62728" if row.get("evidence_confirmed") else "#1f77b4" for row in evidence_rows]
+        fig, ax = plt.subplots(figsize=(6.2, 5.2))
+        ax.scatter(
+            [row["local_evidence_f1"] for row in evidence_rows],
+            [row["team_evidence_f1"] for row in evidence_rows],
+            c=colors, s=22, alpha=.75,
+        )
+        ax.axhline(0, color="black", lw=.8)
+        ax.axvline(0, color="black", lw=.8)
+        ax.set(
+            xlabel="Local causal utility (evidence F1)",
+            ylabel="Team causal utility (evidence F1)",
+            title=f"Evidence-selection mismatch ({e1['model']})",
+        )
+        fig.tight_layout()
+        fig.savefig(args.output_dir / "fig2_evidence_f1_scatter.png", dpi=220, format="png")
+        plt.close(fig)
+
     print(args.output_dir)
 
 

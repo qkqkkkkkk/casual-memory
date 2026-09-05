@@ -7,7 +7,7 @@ from pathlib import Path
 
 from p2_probe_llm.evidence import enrich_split
 from p2_probe_llm.build_pools import write_pool
-from p2_probe_llm.mas import _prompt, run_episode
+from p2_probe_llm.mas import _evidence_metrics, _prompt, run_episode
 from p2_probe_llm.stats import bh_reject, effect
 from p2_probe_llm.retrieval import BM25Index, GMemorySemanticIndex, role_query
 from p2_probe_llm.run_experiment_e1 import memory_is_eligible, retrieve
@@ -94,6 +94,22 @@ class RealProbeTests(unittest.TestCase):
         self.assertIn("MANDATORY TO CONSIDER", combined)
         self.assertIn("memory_assessment", combined)
         self.assertIn("PRIMARY REFERENCE", combined)
+
+    def test_evidence_metrics_uses_explicit_gold_flags(self):
+        bundle = [
+            {"title": "Gold", "text": "supports", "is_gold": True},
+            {"title": "Distractor from m2", "text": "unrelated", "is_gold": False},
+        ]
+        metrics = _evidence_metrics(["E1", "E2"], bundle)
+        self.assertEqual(metrics["evidence_precision"], .5)
+        self.assertEqual(metrics["evidence_recall"], 1.0)
+        self.assertEqual(metrics["evidence_f1"], 2 / 3)
+
+    def test_evidence_metrics_marks_hidden_gold_as_not_estimable(self):
+        bundle = [{"title": "Distractor from m2", "text": "unrelated", "is_gold": False}]
+        metrics = _evidence_metrics(["E1"], bundle)
+        self.assertIsNone(metrics["evidence_f1"])
+        self.assertFalse(metrics["evidence_gold_available"])
 
     def test_e1_roles_share_claim_level_retrieval_query(self):
         claim = {"claim": "Shared query", "evidence_bundle": [{"text": "Ignored for retrieval"}]}

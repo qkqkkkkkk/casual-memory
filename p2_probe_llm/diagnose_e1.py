@@ -53,6 +53,8 @@ def main() -> None:
         stats["a1_solo_verdict_changed"] += c_solo.get("verdict") != t_solo.get("verdict")
         stats["a1_round1_rationale_changed"] += c_r1.get("rationale") != t_r1.get("rationale")
         stats["a1_round1_confidence_changed"] += c_r1.get("confidence") != t_r1.get("confidence")
+        stats["a1_round1_evidence_ids_changed"] += c_r1.get("evidence_ids", []) != t_r1.get("evidence_ids", [])
+        stats["a1_round1_evidence_f1_changed"] += c_r1.get("evidence_f1") != t_r1.get("evidence_f1")
         stats["control_a1_memory_assessed"] += bool(c_r1.get("memory_assessment"))
         stats["treated_a1_memory_assessed"] += bool(t_r1.get("memory_assessment"))
         stats[f"control_a1_influence_{str(c_r1.get('memory_influence', 'missing')).lower()}"] += 1
@@ -61,6 +63,8 @@ def main() -> None:
         stats[f"treated_a1_relevance_{str(t_r1.get('memory_relevance', 'missing')).lower()}"] += 1
         stats["a1_round2_verdict_changed"] += control.get("round2", {}).get("A1", {}).get("verdict") != treated.get("round2", {}).get("A1", {}).get("verdict")
         stats["team_verdict_changed"] += control.get("team_verdict") != treated.get("team_verdict")
+        stats["team_evidence_ids_changed"] += control.get("team_evidence_ids", []) != treated.get("team_evidence_ids", [])
+        stats["team_evidence_f1_changed"] += control.get("team_evidence_f1") != treated.get("team_evidence_f1")
         stats["a2_a3_round1_changed"] += any(control.get("round1", {}).get(a) != treated.get("round1", {}).get(a) for a in ("A2", "A3"))
         if len(examples) < args.limit and c_id != t_id:
             examples.append({
@@ -68,6 +72,8 @@ def main() -> None:
                 "control_memory": c_id, "treated_memory": t_id,
                 "control_r1": c_r1.get("verdict"), "treated_r1": t_r1.get("verdict"),
                 "control_solo": c_solo.get("verdict"), "treated_solo": t_solo.get("verdict"),
+                "control_evidence_ids": c_r1.get("evidence_ids", []), "treated_evidence_ids": t_r1.get("evidence_ids", []),
+                "control_evidence_f1": c_r1.get("evidence_f1"), "treated_evidence_f1": t_r1.get("evidence_f1"),
                 "control_rationale": c_r1.get("rationale", ""), "treated_rationale": t_r1.get("rationale", ""),
                 "control_memory_assessment": c_r1.get("memory_assessment", ""), "treated_memory_assessment": t_r1.get("memory_assessment", ""),
             })
