@@ -22,7 +22,7 @@ class CachedChat:
         self.cache_hits = 0; self.calls = 0
 
     def ask(self, messages: list[dict[str, str]], repeat_idx: int) -> tuple[dict[str, Any], bool]:
-        payload = {"model": self.model, "messages": messages, "temperature": self.temperature, "top_p": 0.8, "seed": repeat_idx, "max_tokens": 320, "response_format": {"type": "json_object"}}
+        payload = {"model": self.model, "messages": messages, "temperature": self.temperature, "top_p": 0.8, "seed": repeat_idx, "max_tokens": 640, "response_format": {"type": "json_object"}}
         key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         cached = self.db.execute("SELECT response FROM responses WHERE key=?", (key,)).fetchone()
         if cached:
