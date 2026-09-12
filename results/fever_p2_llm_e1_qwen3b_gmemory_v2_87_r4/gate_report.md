@@ -1,0 +1,23 @@
+# Real-LLM FEVER E1 Gate Report
+
+- Real evidence present for selected claims: PASS
+- Frozen experience-bank MD5 recorded: PASS (`aa7cc95850840322375f4b137cd36eb8`)
+- Frozen distractor-bank MD5 recorded: PASS (`77314c8eb2932aada7d1e926633ccf40`)
+- Eligible semantic top-1 coverage >= 95%: PASS (97.70%; no candidate 2)
+- Retrieved memory evidence has no exact claim-evidence overlap: PASS (excluded 0)
+- Unaffected A2/A3 round-1 outputs identical across paired arms: PASS
+- One shared claim-level retrieval profile before intervention: PASS
+- Placebo similarity < 0.15 and token difference <= 10%: PASS
+- Structured-output parse failure rate <= 0.5%: PASS (0.1471%)
+- Structured memory-use report completion rate >= 95%: PASS (98.70%)
+- A1 treated memory adopted/partially adopted: 68.82%
+- A1 control placebo adopted/partially adopted: 56.76%
+- Retrieved top-1 cosine score summary: `{'min': 0.30899345874786377, 'mean': 0.4547969698905945, 'max': 0.6919813752174377}`
+- Local A/B sign agreement >= 80%: PASS (83.33%)
+- BH-FDR correction q=0.1 applied: PASS
+- Confirmed mismatch: **0 / 85 (0.000%)**
+- Aggregate local B effect: `{'estimate': 0.008823529411764706, 'ci': [-0.041176470588235294, 0.061764705882352944]}`
+- Aggregate team effect: `{'estimate': -0.047058823529411764, 'ci': [-0.08823529411764706, -0.008823529411764706]}`
+- Evidence-F1 mismatch (local positive, team negative or reverse): **0 / 35 (0.000%)**
+- Aggregate A1 round-1 evidence F1 effect: `{'estimate': -0.014285714285714285, 'ci': [-0.05476190476190476, 0.019047619047619046], 'n_valid_units': 35}`
+- Aggregate team evidence F1 effect: `{'estimate': -0.011428571428571429, 'ci': [-0.03523809523809524, 0.011904761904761904], 'n_valid_units': 35}`
