@@ -54,6 +54,7 @@ from .fever_backend import (
 )
 from .interventions import InterventionBuilder
 from .oracle import OracleControllability, OracleExample
+from .stats import summarize
 from .controller import RelianceController
 from .types import (
     CounterfactualAuditResult,
@@ -64,7 +65,7 @@ from .types import (
 
 
 RUNNER_SCHEMA = "causal-memory-control-fever-v1"
-PRIMARY_ARM = InterventionArm.DROP
+DEFAULT_PRIMARY_ARM = InterventionArm.DROP
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -92,6 +93,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="drop,placebo",
         help="Comma-separated controls: drop,placebo,global_drop; drop is required",
     )
+    parser.add_argument(
+        "--primary-arm",
+        choices=(InterventionArm.DROP.value, InterventionArm.GLOBAL_DROP.value),
+        default=DEFAULT_PRIMARY_ARM.value,
+        help=(
+            "Analysis/training estimand. This does not change collection or the run "
+            "hash, so completed outputs can be reanalysed with --resume."
+        ),
+    )
     parser.add_argument("--selection-seed", type=int, default=42)
     parser.add_argument(
         "--sample-seed-base",
@@ -103,6 +113,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--kappa", type=float, default=1.96)
     parser.add_argument("--minimum-sign-consistency", type=float, default=0.8)
     parser.add_argument("--minimum-oracle-gain", type=float, default=0.0)
+    parser.add_argument("--oracle-bootstrap-samples", type=int, default=2000)
+    parser.add_argument("--oracle-confidence-level", type=float, default=0.95)
     parser.add_argument("--minimum-retest-coverage", type=float, default=0.95)
     parser.add_argument("--retest-results", type=Path, default=None)
     parser.add_argument(
@@ -139,7 +151,7 @@ def _parse_arms(value: str) -> tuple[InterventionArm, ...]:
         raise SystemExit(
             "--arms supports only drop,placebo,global_drop"
         ) from exc
-    if PRIMARY_ARM not in arms:
+    if DEFAULT_PRIMARY_ARM not in arms:
         raise SystemExit("--arms must include drop because USE-vs-DROP is the primary estimand")
     if InterventionArm.USE in arms:
         raise SystemExit("do not include use in --arms; USE is added automatically")
@@ -155,6 +167,10 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("--delta and --kappa must be non-negative")
     if args.minimum_oracle_gain < 0:
         raise SystemExit("--minimum-oracle-gain must be non-negative")
+    if args.oracle_bootstrap_samples < 100:
+        raise SystemExit("--oracle-bootstrap-samples must be at least 100")
+    if not 0.0 < args.oracle_confidence_level < 1.0:
+        raise SystemExit("--oracle-confidence-level must be in (0, 1)")
     for name in (
         "minimum_sign_consistency",
         "minimum_retest_coverage",
@@ -272,6 +288,40 @@ def summarize_audit(result: CounterfactualAuditResult) -> dict[str, Any]:
             "local_utility_samples": [pair.local_utility for pair in arm_result.pairs],
             "sample_seeds": [pair.seed for pair in arm_result.pairs],
         }
+    causal_effects: dict[str, Any] = {}
+    receiver = arms.get(InterventionArm.DROP.value)
+    exposure_set = arms.get(InterventionArm.GLOBAL_DROP.value)
+    if receiver is not None:
+        causal_effects["receiver_marginal"] = {
+            "definition": "Y(use_all)-Y(drop_receiver_only)",
+            **receiver["team_utility"],
+            "samples": receiver["team_utility_samples"],
+        }
+    if exposure_set is not None:
+        causal_effects["exposure_set_total"] = {
+            "definition": "Y(use_all)-Y(drop_from_all_observers)",
+            **exposure_set["team_utility"],
+            "samples": exposure_set["team_utility_samples"],
+        }
+    if receiver is not None and exposure_set is not None:
+        receiver_samples = receiver["team_utility_samples"]
+        global_samples = exposure_set["team_utility_samples"]
+        if len(receiver_samples) != len(global_samples):
+            raise ValueError("DROP and GLOBAL_DROP sample counts must match")
+        spillover_samples = [
+            float(global_value) - float(receiver_value)
+            for receiver_value, global_value in zip(
+                receiver_samples, global_samples
+            )
+        ]
+        causal_effects["spillover_redundancy"] = {
+            "definition": (
+                "exposure_set_total-receiver_marginal="
+                "Y(drop_receiver_only)-Y(drop_from_all_observers)"
+            ),
+            **_estimate_dict(summarize(spillover_samples)),
+            "samples": spillover_samples,
+        }
     event = result.event
     return {
         "event_id": event.event_id,
@@ -283,6 +333,7 @@ def summarize_audit(result: CounterfactualAuditResult) -> dict[str, Any]:
         "retrieval_rank": event.retrieval.rank if event.retrieval else None,
         "reliability_prior": event.reliability_prior,
         "arms": arms,
+        "causal_effects": causal_effects,
     }
 
 
@@ -325,19 +376,26 @@ def _pivotality_rows(
 
 def _noise_report_from_audits(
     audits: Sequence[CounterfactualAuditResult],
+    arm: InterventionArm,
+    *,
+    neutral_epsilon: float,
 ) -> Any:
-    return oracle_noise_floor(
+    observations = [
         UtilityRetest(audit.event.event_id, pair.team_utility)
         for audit in audits
-        for pair in audit.primary.pairs
-    )
+        for result in audit.arms
+        if result.arm == arm
+        for pair in result.pairs
+    ]
+    if not observations:
+        return None
+    return oracle_noise_floor(observations, neutral_epsilon=neutral_epsilon)
 
 
-def _load_independent_noise(
-    current_units: Sequence[Mapping[str, Any]],
+def _load_retest_units(
     current_design_hash: str,
     previous_dir: Path,
-) -> tuple[Any, float]:
+) -> list[dict[str, Any]]:
     manifest_path = previous_dir / "run_manifest.json"
     units_path = previous_dir / "audit_units.json"
     if not manifest_path.is_file() or not units_path.is_file():
@@ -348,27 +406,97 @@ def _load_independent_noise(
     if manifest.get("design_hash") != current_design_hash:
         raise SystemExit("independent retest design_hash does not match this run")
     payload = json.loads(units_path.read_text(encoding="utf-8"))
-    previous = {unit["event_id"]: unit for unit in payload["units"]}
-    current = {unit["event_id"]: unit for unit in current_units}
+    return list(payload["units"])
+
+
+def _sign_label(value: float, delta: float = 0.0) -> str:
+    return {1: "positive", 0: "neutral", -1: "negative"}[_sign(value, delta)]
+
+
+def _independent_arm_diagnostics(
+    current_units: Sequence[Mapping[str, Any]],
+    previous_units: Sequence[Mapping[str, Any]],
+    arm: InterventionArm,
+    *,
+    neutral_epsilon: float,
+) -> tuple[Any | None, float, dict[str, Any]]:
+    previous = {
+        str(unit["event_id"]): unit
+        for unit in previous_units
+        if arm.value in unit.get("arms", {})
+    }
+    current = {
+        str(unit["event_id"]): unit
+        for unit in current_units
+        if arm.value in unit.get("arms", {})
+    }
     shared = sorted(set(previous) & set(current))
-    if not shared:
-        raise SystemExit("independent retest has no matching event IDs")
+    if not current or not shared:
+        return None, 0.0, {
+            "shared_events": 0,
+            "transition_counts": {},
+            "strict_sign_agreement": 0.0,
+            "direct_opposite_sign_rate": 0.0,
+            "nonzero_neutral_transition_rate": 0.0,
+            "stable_nonzero_rate": 0.0,
+        }
     observations = []
+    transition_counts: dict[str, int] = {}
+    strict_agreements = 0
+    direct_reversals = 0
+    neutral_transitions = 0
+    stable_nonzero = 0
     for event_id in shared:
+        values = []
         for source in (previous[event_id], current[event_id]):
-            observations.append(
-                UtilityRetest(
-                    event_id,
-                    float(source["arms"][PRIMARY_ARM.value]["team_utility"]["mean"]),
-                )
+            value = float(
+                source["arms"][arm.value]["team_utility"]["mean"]
             )
-    return oracle_noise_floor(observations), len(shared) / len(current)
+            values.append(value)
+            observations.append(
+                UtilityRetest(event_id, value)
+            )
+        left_sign = _sign(values[0], neutral_epsilon)
+        right_sign = _sign(values[1], neutral_epsilon)
+        transition = (
+            f"{_sign_label(values[0], neutral_epsilon)}_to_"
+            f"{_sign_label(values[1], neutral_epsilon)}"
+        )
+        transition_counts[transition] = transition_counts.get(transition, 0) + 1
+        strict_agreements += int(left_sign == right_sign)
+        direct_reversals += int(left_sign * right_sign == -1)
+        neutral_transitions += int((left_sign == 0) != (right_sign == 0))
+        stable_nonzero += int(left_sign == right_sign and left_sign != 0)
+    count = len(shared)
+    transitions = {
+        "shared_events": count,
+        "transition_counts": dict(sorted(transition_counts.items())),
+        "strict_sign_agreement": strict_agreements / count,
+        "direct_opposite_sign_rate": direct_reversals / count,
+        "nonzero_neutral_transition_rate": neutral_transitions / count,
+        "stable_nonzero_rate": stable_nonzero / count,
+    }
+    return (
+        oracle_noise_floor(observations, neutral_epsilon=neutral_epsilon),
+        count / len(current),
+        transitions,
+    )
 
 
-def _oracle_evaluation(units: Sequence[Mapping[str, Any]], delta: float) -> Any:
+def _units_for_arm(
+    units: Sequence[Mapping[str, Any]], arm: InterventionArm
+) -> list[Mapping[str, Any]]:
+    return [unit for unit in units if arm.value in unit.get("arms", {})]
+
+
+def _oracle_evaluation(
+    units: Sequence[Mapping[str, Any]],
+    arm: InterventionArm,
+    delta: float,
+) -> Any:
     examples = []
-    for unit in units:
-        drop = unit["arms"][PRIMARY_ARM.value]
+    for unit in _units_for_arm(units, arm):
+        outcomes = unit["arms"][arm.value]
         scores = {}
         if unit.get("retrieval_score") is not None:
             scores["similarity"] = float(unit["retrieval_score"])
@@ -377,12 +505,249 @@ def _oracle_evaluation(units: Sequence[Mapping[str, Any]], delta: float) -> Any:
         examples.append(
             OracleExample(
                 event_id=str(unit["event_id"]),
-                q_use=float(drop["q_use"]),
-                q_drop=float(drop["q_control"]),
+                q_use=float(outcomes["q_use"]),
+                q_drop=float(outcomes["q_control"]),
                 scores=scores,
             )
         )
+    if not examples:
+        return None
     return OracleControllability(delta=delta).evaluate(examples)
+
+
+def _percentile(values: Sequence[float], probability: float) -> float:
+    ordered = sorted(float(value) for value in values)
+    if not ordered:
+        raise ValueError("percentile requires at least one value")
+    position = probability * (len(ordered) - 1)
+    lower = math.floor(position)
+    upper = math.ceil(position)
+    if lower == upper:
+        return ordered[lower]
+    weight = position - lower
+    return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
+
+
+def _oracle_gain_bootstrap(
+    units: Sequence[Mapping[str, Any]],
+    arm: InterventionArm,
+    oracle: Any,
+    *,
+    samples: int,
+    confidence_level: float,
+    seed: int,
+) -> dict[str, Any]:
+    arm_units = _units_for_arm(units, arm)
+    if oracle is None or not arm_units:
+        return {
+            "status": "unavailable",
+            "reason": "arm_has_no_audit_units",
+        }
+    oracle_policy = oracle.policy("oracle")
+    strongest = max(
+        (policy for policy in oracle.policies if policy.policy != "oracle"),
+        key=lambda policy: (policy.mean_reward, policy.policy),
+    )
+    differences = []
+    for unit, oracle_use, baseline_use in zip(
+        arm_units, oracle_policy.decisions, strongest.decisions
+    ):
+        outcomes = unit["arms"][arm.value]
+        q_use = float(outcomes["q_use"])
+        q_control = float(outcomes["q_control"])
+        oracle_reward = q_use if oracle_use else q_control
+        baseline_reward = q_use if baseline_use else q_control
+        differences.append(oracle_reward - baseline_reward)
+    point_gain = sum(differences) / len(differences)
+    arm_seed = sum((index + 1) * ord(char) for index, char in enumerate(arm.value))
+    rng = random.Random(seed + arm_seed)
+    bootstrapped = []
+    for _ in range(samples):
+        bootstrapped.append(
+            sum(differences[rng.randrange(len(differences))] for _ in differences)
+            / len(differences)
+        )
+    alpha = (1.0 - confidence_level) / 2.0
+    return {
+        "status": "ok",
+        "method": "event_percentile_bootstrap_with_fixed_policy_decisions",
+        "comparison_policy": strongest.policy,
+        "point_gain": point_gain,
+        "confidence_level": confidence_level,
+        "ci_low": _percentile(bootstrapped, alpha),
+        "ci_high": _percentile(bootstrapped, 1.0 - alpha),
+        "bootstrap_samples": samples,
+        "event_count": len(differences),
+        "nonzero_event_differences": sum(value != 0.0 for value in differences),
+    }
+
+
+def _arm_gate(
+    *,
+    oracle: Any,
+    within_noise: Any,
+    independent_noise: Any | None,
+    retest_coverage: float,
+    transition_diagnostics: Mapping[str, Any] | None,
+    bootstrap: Mapping[str, Any],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    gate_noise = independent_noise or within_noise
+    base_gate = evaluate_pretraining_gate(
+        oracle,
+        gate_noise,
+        minimum_sign_consistency=args.minimum_sign_consistency,
+        minimum_oracle_gain=args.minimum_oracle_gain,
+    )
+    ci_low = bootstrap.get("ci_low")
+    oracle_ci_passed = (
+        ci_low is not None and float(ci_low) > args.minimum_oracle_gain
+    )
+    oracle_passed = bool(base_gate.oracle_passed and oracle_ci_passed)
+    reasons = list(base_gate.reasons)
+    if base_gate.oracle_passed and not oracle_ci_passed:
+        reasons.append("oracle_gain_ci_not_above_minimum")
+    can_train = bool(oracle_passed and base_gate.noise_floor_passed)
+    if independent_noise is None:
+        can_train = False
+        reasons.append("independent_retest_required")
+    elif retest_coverage < args.minimum_retest_coverage:
+        can_train = False
+        reasons.append("independent_retest_coverage_below_threshold")
+    return {
+        **asdict(base_gate),
+        "can_train": can_train,
+        "oracle_passed": oracle_passed,
+        "oracle_point_passed": base_gate.oracle_passed,
+        "oracle_ci_passed": oracle_ci_passed,
+        "oracle_gain_bootstrap": dict(bootstrap),
+        "minimum_oracle_gain": args.minimum_oracle_gain,
+        "reasons": reasons,
+        "sign_consistency_source": (
+            "independent_run_level_retest"
+            if independent_noise is not None
+            else "within_run_repeats_diagnostic_only"
+        ),
+        "independent_retest_coverage": retest_coverage,
+        "minimum_retest_coverage": args.minimum_retest_coverage,
+        "sign_transition_diagnostics": (
+            dict(transition_diagnostics)
+            if transition_diagnostics is not None
+            else None
+        ),
+    }
+
+
+def _normalize_confidence(value: Any) -> tuple[float | None, str]:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None, "missing_or_non_numeric"
+    if not math.isfinite(numeric):
+        return None, "non_finite"
+    if 0.0 <= numeric <= 1.0:
+        return numeric, "unit_interval"
+    if 1.0 < numeric <= 100.0:
+        return numeric / 100.0, "percentage"
+    return None, "out_of_range"
+
+
+def _confidence_diagnostics(
+    rows: Iterable[Mapping[str, Any]],
+) -> dict[str, Any]:
+    scale_counts: dict[str, int] = {}
+    normalized_values = []
+    parse_failures = 0
+    parsed_outputs = 0
+    branch_scores: dict[str, list[float]] = {}
+    branch_support: dict[str, list[float]] = {}
+    for row in rows:
+        for round_name in ("round1", "round2"):
+            for output in row.get(round_name, {}).values():
+                parsed_outputs += 1
+                parse_failures += int(bool(output.get("parse_fail")))
+                normalized, scale = _normalize_confidence(output.get("confidence"))
+                scale_counts[scale] = scale_counts.get(scale, 0) + 1
+                if normalized is not None:
+                    normalized_values.append(normalized)
+        correctness_probabilities = []
+        support_probabilities = []
+        for output in row.get("round2", {}).values():
+            normalized, _ = _normalize_confidence(output.get("confidence"))
+            if normalized is None:
+                continue
+            correctness_probabilities.append(
+                normalized if bool(output.get("correct")) else 1.0 - normalized
+            )
+            support_probabilities.append(
+                normalized
+                if str(output.get("verdict")) == "SUPPORTS"
+                else 1.0 - normalized
+            )
+        branch = str(row.get("branch", "unknown"))
+        if correctness_probabilities:
+            branch_scores.setdefault(branch, []).append(
+                sum(correctness_probabilities) / len(correctness_probabilities)
+            )
+        if support_probabilities:
+            branch_support.setdefault(branch, []).append(
+                sum(support_probabilities) / len(support_probabilities)
+            )
+    return {
+        "status": "auxiliary_uncalibrated_self_report_only",
+        "normalization": "values in (1,100] divided by 100; [0,1] unchanged",
+        "parsed_outputs": parsed_outputs,
+        "parse_failures": parse_failures,
+        "confidence_scale_counts": dict(sorted(scale_counts.items())),
+        "normalized_confidence_count": len(normalized_values),
+        "normalized_confidence_min": (
+            min(normalized_values) if normalized_values else None
+        ),
+        "normalized_confidence_max": (
+            max(normalized_values) if normalized_values else None
+        ),
+        "normalized_confidence_mean": (
+            sum(normalized_values) / len(normalized_values)
+            if normalized_values
+            else None
+        ),
+        "branch_mean_team_correctness_score": {
+            branch: sum(values) / len(values)
+            for branch, values in sorted(branch_scores.items())
+        },
+        "branch_mean_support_probability": {
+            branch: sum(values) / len(values)
+            for branch, values in sorted(branch_support.items())
+        },
+    }
+
+
+def _causal_effect_summary(
+    units: Sequence[Mapping[str, Any]], *, delta: float
+) -> dict[str, Any]:
+    names = (
+        "receiver_marginal",
+        "exposure_set_total",
+        "spillover_redundancy",
+    )
+    result = {}
+    for name in names:
+        values = [
+            float(unit["causal_effects"][name]["mean"])
+            for unit in units
+            if name in unit.get("causal_effects", {})
+        ]
+        if not values:
+            continue
+        signs = [_sign(value, delta) for value in values]
+        result[name] = {
+            "event_count": len(values),
+            "mean_of_event_means": sum(values) / len(values),
+            "positive_events": signs.count(1),
+            "neutral_events": signs.count(0),
+            "negative_events": signs.count(-1),
+        }
+    return result
 
 
 def _split_claims(
@@ -407,11 +772,16 @@ def _fit_and_evaluate(
     *,
     units: Sequence[Mapping[str, Any]],
     events: Mapping[str, MemoryUseEvent],
+    primary_arm: InterventionArm,
     args: argparse.Namespace,
     gate: Mapping[str, Any],
 ) -> dict[str, Any]:
     if not gate["can_train"]:
-        return {"status": "blocked_by_pretraining_gate", "reasons": gate["reasons"]}
+        return {
+            "status": "blocked_by_pretraining_gate",
+            "primary_arm": primary_arm.value,
+            "reasons": gate["reasons"],
+        }
     train_claims, test_claims = _split_claims(
         units, args.train_fraction, args.selection_seed
     )
@@ -420,6 +790,7 @@ def _fit_and_evaluate(
     if len(train_units) < args.min_train_samples or not test_units:
         return {
             "status": "insufficient_split",
+            "primary_arm": primary_arm.value,
             "train_units": len(train_units),
             "test_units": len(test_units),
             "minimum_train_samples": args.min_train_samples,
@@ -428,12 +799,12 @@ def _fit_and_evaluate(
     examples = []
     for unit in train_units:
         event = events[str(unit["event_id"])]
-        drop = unit["arms"][PRIMARY_ARM.value]
+        outcomes = unit["arms"][primary_arm.value]
         examples.append(
             PotentialOutcomeExample(
                 features=builder.build(event),
-                q_use=float(drop["q_use"]),
-                q_drop=float(drop["q_control"]),
+                q_use=float(outcomes["q_use"]),
+                q_drop=float(outcomes["q_control"]),
                 event_id=event.event_id,
             )
         )
@@ -444,7 +815,11 @@ def _fit_and_evaluate(
         seed=args.selection_seed + 97,
     )
     if not estimator.fit(examples):
-        return {"status": "estimator_fit_failed", "train_units": len(train_units)}
+        return {
+            "status": "estimator_fit_failed",
+            "primary_arm": primary_arm.value,
+            "train_units": len(train_units),
+        }
     controller = RelianceController(delta=args.delta, kappa=args.kappa)
     predictions = []
     true_use = []
@@ -458,9 +833,9 @@ def _fit_and_evaluate(
     interval_hits = []
     for unit in test_units:
         event = events[str(unit["event_id"])]
-        drop = unit["arms"][PRIMARY_ARM.value]
-        q_use = float(drop["q_use"])
-        q_drop = float(drop["q_control"])
+        outcomes = unit["arms"][primary_arm.value]
+        q_use = float(outcomes["q_use"])
+        q_drop = float(outcomes["q_control"])
         utility = q_use - q_drop
         prediction = estimator.predict(builder.build(event))
         decision = controller.decide(prediction)
@@ -503,6 +878,7 @@ def _fit_and_evaluate(
     }
     return {
         "status": "fitted_and_evaluated",
+        "primary_arm": primary_arm.value,
         "split_unit": "claim_id",
         "train_claims": sorted(train_claims),
         "test_claims": sorted(test_claims),
@@ -539,6 +915,11 @@ def main(argv: Sequence[str] | None = None) -> Path:
         raise SystemExit(f"cache seed file does not exist: {args.cache_seed_from}")
     receivers = _parse_receivers(args.receivers)
     requested_arms = _parse_arms(args.arms)
+    primary_arm = InterventionArm(args.primary_arm)
+    if primary_arm not in requested_arms:
+        raise SystemExit(
+            f"--primary-arm {primary_arm.value} must also be present in --arms"
+        )
 
     input_hashes = {
         "test_md5": _md5(args.test),
@@ -678,47 +1059,98 @@ def main(argv: Sequence[str] | None = None) -> Path:
     }
     _json_dump(args.output_dir / "audit_units.json", units_payload)
 
-    oracle = _oracle_evaluation(units, args.delta)
-    oracle_payload = asdict(oracle)
-    _json_dump(args.output_dir / "oracle_evaluation.json", oracle_payload)
-    within_noise = _noise_report_from_audits(audits)
-    independent_noise = None
-    retest_coverage = 0.0
+    previous_units = None
     if args.retest_results is not None:
-        independent_noise, retest_coverage = _load_independent_noise(
-            units, design_hash, args.retest_results
+        previous_units = _load_retest_units(
+            design_hash, args.retest_results
         )
-    gate_noise = independent_noise or within_noise
-    base_gate = evaluate_pretraining_gate(
-        oracle,
-        gate_noise,
-        minimum_sign_consistency=args.minimum_sign_consistency,
-        minimum_oracle_gain=args.minimum_oracle_gain,
-    )
-    gate_reasons = list(base_gate.reasons)
-    can_train = base_gate.can_train
-    if independent_noise is None:
-        can_train = False
-        gate_reasons.append("independent_retest_required")
-    elif retest_coverage < args.minimum_retest_coverage:
-        can_train = False
-        gate_reasons.append("independent_retest_coverage_below_threshold")
+    arm_evaluations: dict[str, Any] = {}
+    arm_objects: dict[str, Any] = {}
+    for arm in requested_arms:
+        arm_units = _units_for_arm(units, arm)
+        if not arm_units:
+            arm_evaluations[arm.value] = {
+                "status": "unavailable",
+                "reason": "arm_has_no_valid_audit_units",
+                "audit_units": 0,
+            }
+            continue
+        oracle = _oracle_evaluation(units, arm, args.delta)
+        within_noise = _noise_report_from_audits(
+            audits, arm, neutral_epsilon=args.delta
+        )
+        independent_noise = None
+        retest_coverage = 0.0
+        transitions = None
+        if previous_units is not None:
+            independent_noise, retest_coverage, transitions = (
+                _independent_arm_diagnostics(
+                    units,
+                    previous_units,
+                    arm,
+                    neutral_epsilon=args.delta,
+                )
+            )
+        bootstrap = _oracle_gain_bootstrap(
+            units,
+            arm,
+            oracle,
+            samples=args.oracle_bootstrap_samples,
+            confidence_level=args.oracle_confidence_level,
+            seed=args.selection_seed,
+        )
+        gate = _arm_gate(
+            oracle=oracle,
+            within_noise=within_noise,
+            independent_noise=independent_noise,
+            retest_coverage=retest_coverage,
+            transition_diagnostics=transitions,
+            bootstrap=bootstrap,
+            args=args,
+        )
+        arm_objects[arm.value] = oracle
+        arm_evaluations[arm.value] = {
+            "status": "ok",
+            "audit_units": len(arm_units),
+            "oracle": asdict(oracle),
+            "within_run_repeat_noise": asdict(within_noise),
+            "independent_retest_noise": (
+                asdict(independent_noise)
+                if independent_noise is not None
+                else None
+            ),
+            "gate": gate,
+        }
+    primary_evaluation = arm_evaluations.get(primary_arm.value)
+    if not primary_evaluation or primary_evaluation.get("status") != "ok":
+        raise SystemExit(f"primary arm {primary_arm.value} has no valid audit units")
+    if args.retest_results is not None and primary_evaluation["gate"].get(
+        "independent_retest_coverage", 0.0
+    ) == 0.0:
+        raise SystemExit("independent retest has no matching primary-arm event IDs")
     gate_payload = {
-        **asdict(base_gate),
-        "can_train": can_train,
-        "reasons": gate_reasons,
-        "sign_consistency_source": (
-            "independent_run_level_retest"
-            if independent_noise is not None
-            else "within_run_repeats_diagnostic_only"
-        ),
-        "independent_retest_coverage": retest_coverage,
-        "minimum_retest_coverage": args.minimum_retest_coverage,
+        "primary_arm": primary_arm.value,
+        **primary_evaluation["gate"],
     }
+    oracle_payload = {
+        "primary_arm": primary_arm.value,
+        **asdict(arm_objects[primary_arm.value]),
+        "gain_bootstrap": gate_payload["oracle_gain_bootstrap"],
+    }
+    _json_dump(args.output_dir / "arm_evaluations.json", {
+        "runner_schema": RUNNER_SCHEMA,
+        "primary_arm": primary_arm.value,
+        "arms": arm_evaluations,
+    })
+    _json_dump(args.output_dir / "oracle_evaluation.json", oracle_payload)
     _json_dump(args.output_dir / "pretraining_gate.json", gate_payload)
 
     pivotality = stratify_pivotality(_pivotality_rows(audits))
+    primary_within_noise = primary_evaluation["within_run_repeat_noise"]
+    primary_independent_noise = primary_evaluation["independent_retest_noise"]
+    raw_rows = list(existing_rows.values())
     diagnostics = {
+        "primary_arm": primary_arm.value,
         "n_selected_claims": len(selected_claims),
         "n_audit_units": len(units),
         "excluded_no_eligible_memory": excluded_no_memory,
@@ -727,33 +1159,60 @@ def main(argv: Sequence[str] | None = None) -> Path:
             events.values()
         ),
         "pivotality_bins": [asdict(row) for row in pivotality],
-        "within_run_repeat_noise": asdict(within_noise),
-        "independent_retest_noise": (
-            asdict(independent_noise) if independent_noise is not None else None
+        "pivotality_estimand": "receiver_marginal_drop",
+        "within_run_repeat_noise": primary_within_noise,
+        "independent_retest_noise": primary_independent_noise,
+        "per_arm_gate_summary": {
+            name: evaluation.get("gate")
+            for name, evaluation in arm_evaluations.items()
+            if evaluation.get("status") == "ok"
+        },
+        "causal_effect_summary": _causal_effect_summary(
+            units, delta=args.delta
         ),
+        "confidence_diagnostics": _confidence_diagnostics(raw_rows),
         "llm_calls": int(client.calls),
         "cache_hits": int(client.cache_hits),
+        "logged_collection_llm_calls": sum(
+            int(row.get("branch_llm_calls", 0)) for row in raw_rows
+        ),
+        "logged_collection_cache_hits": sum(
+            int(row.get("branch_cache_hits", 0)) for row in raw_rows
+        ),
     }
     _json_dump(args.output_dir / "diagnostics.json", diagnostics)
 
     estimator = _fit_and_evaluate(
         units=units,
         events=events,
+        primary_arm=primary_arm,
         args=args,
         gate=gate_payload,
     )
     _json_dump(args.output_dir / "estimator_evaluation.json", estimator)
     report = (
         "# FEVER causal-memory audit\n\n"
+        f"- Primary arm: {primary_arm.value}\n"
         f"- Audit units: {len(units)}\n"
         f"- LLM calls in this process: {client.calls}\n"
         f"- Cache hits in this process: {client.cache_hits}\n"
         f"- |O(m)| distribution: {diagnostics['memory_observation_count_distribution']}\n"
-        f"- Oracle headroom gate: {'PASS' if base_gate.oracle_passed else 'FAIL'}\n"
+        f"- Oracle point-estimate gate: "
+        f"{'PASS' if gate_payload['oracle_point_passed'] else 'FAIL'}\n"
+        f"- Oracle bootstrap-CI gate: "
+        f"{'PASS' if gate_payload['oracle_ci_passed'] else 'FAIL'} "
+        f"(CI={gate_payload['oracle_gain_bootstrap'].get('ci_low')}, "
+        f"{gate_payload['oracle_gain_bootstrap'].get('ci_high')})\n"
         f"- Sign consistency: {gate_payload['sign_consistency']:.3f} "
         f"({gate_payload['sign_consistency_source']})\n"
-        f"- Pretraining gate: {'PASS' if can_train else 'BLOCKED'}\n"
-        f"- Gate reasons: {gate_reasons or ['none']}\n"
+        f"- Direct opposite-sign rate: "
+        f"{(gate_payload.get('sign_transition_diagnostics') or {}).get('direct_opposite_sign_rate')}\n"
+        f"- Nonzero/neutral transition rate: "
+        f"{(gate_payload.get('sign_transition_diagnostics') or {}).get('nonzero_neutral_transition_rate')}\n"
+        f"- Stable nonzero rate: "
+        f"{(gate_payload.get('sign_transition_diagnostics') or {}).get('stable_nonzero_rate')}\n"
+        f"- Pretraining gate: {'PASS' if gate_payload['can_train'] else 'BLOCKED'}\n"
+        f"- Gate reasons: {gate_payload['reasons'] or ['none']}\n"
         f"- Estimator: {estimator['status']}\n"
     )
     (args.output_dir / "run_report.md").write_text(report, encoding="utf-8")
@@ -766,9 +1225,12 @@ def main(argv: Sequence[str] | None = None) -> Path:
                 "n_audit_units": len(units),
                 "llm_calls": diagnostics["llm_calls"],
                 "cache_hits": diagnostics["cache_hits"],
-                "oracle_passed": base_gate.oracle_passed,
+                "primary_arm": primary_arm.value,
+                "oracle_point_passed": gate_payload["oracle_point_passed"],
+                "oracle_ci_passed": gate_payload["oracle_ci_passed"],
+                "oracle_passed": gate_payload["oracle_passed"],
                 "sign_consistency": gate_payload["sign_consistency"],
-                "pretraining_can_train": can_train,
+                "pretraining_can_train": gate_payload["can_train"],
                 "estimator_status": estimator["status"],
             },
             ensure_ascii=False,

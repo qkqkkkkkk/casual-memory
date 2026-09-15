@@ -14,7 +14,13 @@ from causal_memory_control.fever_backend import (
     load_existing_rows,
     placebo_candidate,
 )
-from causal_memory_control.run_fever_audit import summarize_audit
+from causal_memory_control.run_fever_audit import (
+    _independent_arm_diagnostics,
+    _normalize_confidence,
+    _oracle_evaluation,
+    _oracle_gain_bootstrap,
+    summarize_audit,
+)
 from causal_memory_control import run_fever_audit
 
 
@@ -77,6 +83,77 @@ def fixture():
 
 
 class FeverRunnerTests(unittest.TestCase):
+    def test_sign_transitions_separate_reversals_from_neutral_changes(self):
+        def unit(event_id, utility):
+            return {
+                "event_id": event_id,
+                "arms": {
+                    "drop": {
+                        "q_use": 0.5 + utility,
+                        "q_control": 0.5,
+                        "team_utility": {"mean": utility},
+                    }
+                },
+            }
+
+        previous = [
+            unit("neutral-change", 0.0),
+            unit("reversal", 0.25),
+            unit("stable-negative", -0.25),
+            unit("stable-neutral", 0.0),
+        ]
+        current = [
+            unit("neutral-change", 0.25),
+            unit("reversal", -0.25),
+            unit("stable-negative", -0.25),
+            unit("stable-neutral", 0.0),
+        ]
+        noise, coverage, transitions = _independent_arm_diagnostics(
+            current,
+            previous,
+            InterventionArm.DROP,
+            neutral_epsilon=0.0,
+        )
+        self.assertEqual(coverage, 1.0)
+        self.assertEqual(noise.weighted_pairwise_agreement, 0.5)
+        self.assertEqual(transitions["strict_sign_agreement"], 0.5)
+        self.assertEqual(transitions["direct_opposite_sign_rate"], 0.25)
+        self.assertEqual(transitions["nonzero_neutral_transition_rate"], 0.25)
+        self.assertEqual(transitions["stable_nonzero_rate"], 0.25)
+
+    def test_confidence_normalization_and_sparse_oracle_bootstrap(self):
+        self.assertEqual(_normalize_confidence(0.85), (0.85, "unit_interval"))
+        self.assertEqual(_normalize_confidence(85), (0.85, "percentage"))
+        self.assertEqual(_normalize_confidence(None), (None, "missing_or_non_numeric"))
+
+        units = []
+        for index in range(10):
+            utility = 0.25 if index == 0 else -0.25
+            units.append(
+                {
+                    "event_id": f"event-{index}",
+                    "arms": {
+                        "drop": {
+                            "q_use": 0.75 + utility,
+                            "q_control": 0.75,
+                            "team_utility": {"mean": utility},
+                        }
+                    },
+                }
+            )
+        oracle = _oracle_evaluation(units, InterventionArm.DROP, 0.0)
+        bootstrap = _oracle_gain_bootstrap(
+            units,
+            InterventionArm.DROP,
+            oracle,
+            samples=1000,
+            confidence_level=0.95,
+            seed=42,
+        )
+        self.assertAlmostEqual(bootstrap["point_gain"], 0.025)
+        self.assertEqual(bootstrap["nonzero_event_differences"], 1)
+        self.assertEqual(bootstrap["ci_low"], 0.0)
+
     def test_real_p2_backend_runs_all_receiver_interventions_and_resumes(self):
         claim, memory, placebo, candidates = fixture()
         event = build_fever_event(
@@ -122,6 +199,15 @@ class FeverRunnerTests(unittest.TestCase):
             self.assertEqual(summary["memory_observation_count"], 3)
             self.assertEqual(summary["arms"]["drop"]["q_use"], 1.0)
             self.assertEqual(summary["arms"]["drop"]["q_control"], 1.0)
+            self.assertEqual(
+                summary["causal_effects"]["receiver_marginal"]["mean"], 0.0
+            )
+            self.assertEqual(
+                summary["causal_effects"]["exposure_set_total"]["mean"], 1.0
+            )
+            self.assertEqual(
+                summary["causal_effects"]["spillover_redundancy"]["mean"], 1.0
+            )
 
             calls = client.calls
             resumed = FeverBranchRunner(
@@ -186,16 +272,51 @@ class FeverRunnerTests(unittest.TestCase):
                         "--distractor-bank", str(distractor_path),
                         "--claims", "1",
                         "--repeats", "2",
-                        "--arms", "drop,placebo",
+                        "--arms", "drop,placebo,global_drop",
                         "--output-dir", str(output),
                     )
                 )
-            self.assertEqual(len((output / "audit_runs.jsonl").read_text().splitlines()), 6)
+            self.assertEqual(len((output / "audit_runs.jsonl").read_text().splitlines()), 8)
             gate = json.loads((output / "pretraining_gate.json").read_text())
             estimator = json.loads((output / "estimator_evaluation.json").read_text())
             self.assertFalse(gate["can_train"])
             self.assertIn("independent_retest_required", gate["reasons"])
             self.assertEqual(estimator["status"], "blocked_by_pretraining_gate")
+            initial_manifest = json.loads((output / "run_manifest.json").read_text())
+
+            # Changing only the analysis estimand can reuse completed raw branches.
+            with patch.object(run_fever_audit, "CachedChat", FakeClient), patch.object(
+                run_fever_audit, "GMemorySemanticIndex", FakeIndex
+            ):
+                run_fever_audit.main(
+                    (
+                        "--test", str(test_path),
+                        "--experience-bank", str(experience_path),
+                        "--distractor-bank", str(distractor_path),
+                        "--claims", "1",
+                        "--repeats", "2",
+                        "--arms", "drop,placebo,global_drop",
+                        "--primary-arm", "global_drop",
+                        "--output-dir", str(output),
+                        "--resume",
+                    )
+                )
+            resumed_manifest = json.loads((output / "run_manifest.json").read_text())
+            self.assertEqual(initial_manifest["run_hash"], resumed_manifest["run_hash"])
+            self.assertEqual(len((output / "audit_runs.jsonl").read_text().splitlines()), 8)
+            gate = json.loads((output / "pretraining_gate.json").read_text())
+            arm_evaluations = json.loads(
+                (output / "arm_evaluations.json").read_text()
+            )
+            diagnostics = json.loads((output / "diagnostics.json").read_text())
+            self.assertEqual(gate["primary_arm"], "global_drop")
+            self.assertEqual(
+                set(arm_evaluations["arms"]), {"drop", "placebo", "global_drop"}
+            )
+            self.assertEqual(
+                diagnostics["confidence_diagnostics"]["confidence_scale_counts"],
+                {"unit_interval": 48},
+            )
 
             retest_output = root / "retest"
             with patch.object(run_fever_audit, "CachedChat", FakeClient), patch.object(
@@ -208,7 +329,8 @@ class FeverRunnerTests(unittest.TestCase):
                         "--distractor-bank", str(distractor_path),
                         "--claims", "1",
                         "--repeats", "2",
-                        "--arms", "drop,placebo",
+                        "--arms", "drop,placebo,global_drop",
+                        "--primary-arm", "global_drop",
                         "--sample-seed-base", "2000",
                         "--retest-results", str(output),
                         "--output-dir", str(retest_output),
@@ -223,6 +345,9 @@ class FeverRunnerTests(unittest.TestCase):
             )
             self.assertEqual(retest_gate["independent_retest_coverage"], 1.0)
             self.assertNotIn("independent_retest_required", retest_gate["reasons"])
+            transitions = retest_gate["sign_transition_diagnostics"]
+            self.assertEqual(transitions["strict_sign_agreement"], 1.0)
+            self.assertEqual(transitions["stable_nonzero_rate"], 1.0)
 
 
 if __name__ == "__main__":
