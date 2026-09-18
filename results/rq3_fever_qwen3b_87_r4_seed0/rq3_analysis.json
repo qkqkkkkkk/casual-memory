@@ -1,0 +1,4874 @@
+{
+  "analysis_schema": "recipient-heterogeneity-fever-v1",
+  "design_hash": "ea9c136fafea27f0520bb98f82a6bd1a59fdb3ef8bc03174b5307cc97402c0f9",
+  "current_results": "results/rq3_fever_qwen3b_87_r4_seed0",
+  "current_run": {
+    "analysis_schema": "recipient-heterogeneity-fever-v1",
+    "estimand": "U_team(memory, recipient)=Y(use_all)-Y(drop_recipient_only)",
+    "arm": "drop",
+    "recipients": [
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "neutral_epsilon": 0.0,
+    "bootstrap_unit": "claim_memory_event",
+    "event_count": 85,
+    "recipient_event_count": 255,
+    "repeat_counts": {
+      "4": 85
+    },
+    "direct_recipient_sign_flip_rate": {
+      "estimate": 0.047058823529411764,
+      "ci_low": 0.011764705882352941,
+      "ci_high": 0.09411764705882353,
+      "confidence_level": 0.95,
+      "bootstrap_samples": 10000,
+      "event_count": 85
+    },
+    "any_recipient_sign_heterogeneity_rate": {
+      "estimate": 0.27058823529411763,
+      "ci_low": 0.17647058823529413,
+      "ci_high": 0.36470588235294116,
+      "confidence_level": 0.95,
+      "bootstrap_samples": 10000,
+      "event_count": 85
+    },
+    "mean_within_event_utility_range": {
+      "estimate": 0.10588235294117647,
+      "ci_low": 0.07058823529411765,
+      "ci_high": 0.14411764705882352,
+      "confidence_level": 0.95,
+      "bootstrap_samples": 10000,
+      "event_count": 85
+    },
+    "per_recipient": {
+      "A1": {
+        "mean_utility": {
+          "estimate": -0.023529411764705882,
+          "ci_low": -0.05588235294117647,
+          "ci_high": 0.0029411764705882353,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "positive_events": 5,
+        "neutral_events": 70,
+        "negative_events": 10
+      },
+      "A2": {
+        "mean_utility": {
+          "estimate": 0.0058823529411764705,
+          "ci_low": -0.023529411764705882,
+          "ci_high": 0.03529411764705882,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "positive_events": 11,
+        "neutral_events": 65,
+        "negative_events": 9
+      },
+      "A3": {
+        "mean_utility": {
+          "estimate": 0.0058823529411764705,
+          "ci_low": -0.029411764705882353,
+          "ci_high": 0.04411764705882353,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "positive_events": 13,
+        "neutral_events": 61,
+        "negative_events": 11
+      }
+    },
+    "pairwise": {
+      "A1_vs_A2": {
+        "difference_definition": "U(A1)-U(A2)",
+        "mean_difference": {
+          "estimate": -0.029411764705882353,
+          "ci_low": -0.058823529411764705,
+          "ci_high": -0.0029411764705882353,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "mean_absolute_difference": {
+          "estimate": 0.06470588235294118,
+          "ci_low": 0.03823529411764706,
+          "ci_high": 0.09117647058823529,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "sign_disagreement_rate": {
+          "estimate": 0.18823529411764706,
+          "ci_low": 0.10588235294117647,
+          "ci_high": 0.2705882352941177,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "direct_opposite_sign_rate": {
+          "estimate": 0.011764705882352941,
+          "ci_low": 0.0,
+          "ci_high": 0.03529411764705882,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        }
+      },
+      "A1_vs_A3": {
+        "difference_definition": "U(A1)-U(A3)",
+        "mean_difference": {
+          "estimate": -0.029411764705882353,
+          "ci_low": -0.06764705882352941,
+          "ci_high": 0.0058823529411764705,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "mean_absolute_difference": {
+          "estimate": 0.07647058823529412,
+          "ci_low": 0.04411764705882353,
+          "ci_high": 0.11176470588235295,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "sign_disagreement_rate": {
+          "estimate": 0.18823529411764706,
+          "ci_low": 0.10588235294117647,
+          "ci_high": 0.2705882352941177,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "direct_opposite_sign_rate": {
+          "estimate": 0.03529411764705882,
+          "ci_low": 0.0,
+          "ci_high": 0.08235294117647059,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        }
+      },
+      "A2_vs_A3": {
+        "difference_definition": "U(A2)-U(A3)",
+        "mean_difference": {
+          "estimate": 0.0,
+          "ci_low": -0.03235294117647059,
+          "ci_high": 0.03235294117647059,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "mean_absolute_difference": {
+          "estimate": 0.07058823529411765,
+          "ci_low": 0.04411764705882353,
+          "ci_high": 0.1,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "sign_disagreement_rate": {
+          "estimate": 0.2,
+          "ci_low": 0.11764705882352941,
+          "ci_high": 0.2823529411764706,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        },
+        "direct_opposite_sign_rate": {
+          "estimate": 0.011764705882352941,
+          "ci_low": 0.0,
+          "ci_high": 0.03529411764705882,
+          "confidence_level": 0.95,
+          "bootstrap_samples": 10000,
+          "event_count": 85
+        }
+      }
+    },
+    "events": [
+      {
+        "claim_id": "101771",
+        "memory_id": "fever-train-144628",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-30e61c290a988732debc3577",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-624da94fbf39f204fe86189b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-4ee1eabb5a46905e56393a81",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "103451",
+        "memory_id": "fever-train-40777",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-d8b79f01e753670519ac149d",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-38fec6a7a242a2de45b110ea",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-5b58a8d8bfb2fb9c3333e971",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "106926",
+        "memory_id": "fever-train-70516",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-a631e307b8edc66b5c3202f7",
+            "q_use": 0.5,
+            "q_drop": 1.0,
+            "utility": -0.5,
+            "utility_samples": [
+              -1.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-499eeae6bf333926ef66dce2",
+            "q_use": 0.5,
+            "q_drop": 0.75,
+            "utility": -0.25,
+            "utility_samples": [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-17f46982376c0e0d9d750d17",
+            "q_use": 0.5,
+            "q_drop": 0.5,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "negative",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "113150",
+        "memory_id": "fever-train-61369",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-8cd96a8483f193fd8137d462",
+            "q_use": 0.25,
+            "q_drop": 0.25,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-1b76db41bebacbdaf57f95fc",
+            "q_use": 0.25,
+            "q_drop": 0.25,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-c1dd008168fa2f97cfe5e49c",
+            "q_use": 0.25,
+            "q_drop": 0.0,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "114495",
+        "memory_id": "fever-train-116681",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-e7b5671772ec0043eeae1d5c",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-40d870852dab36e1f1d1a20a",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-3f94b70f514a5f09e329555a",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "117416",
+        "memory_id": "fever-train-57705",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-89f0b3f622ed9e17a43dbce0",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-8299058cd7df51a0ad1a8bff",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-6044825ca30eb81e0ecdc203",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "119219",
+        "memory_id": "fever-train-12718",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-8a466f16c28fe1135ae72d10",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-92e71a663729624bd70ba01a",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-ed269349c63b5efb6c09d37a",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "121709",
+        "memory_id": "fever-train-95231",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-7f5df6f458696eee88410d2d",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-4be7688d1306c3d50b4f063a",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-10e936e811767dc22ae58931",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "122673",
+        "memory_id": "fever-train-152891",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-2c4106cf836d4fd1a80ca169",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-9d5f697c1bf541bac1af17dd",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-0dcfc980a2b6bf783b8043b4",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "124339",
+        "memory_id": "fever-train-50783",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-0366fccb095164dfcc338259",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-6be93f643de2d7ca0c777691",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-7d0a2e859def2fb456e456da",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "126878",
+        "memory_id": "fever-train-106672",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-6aa08fd270b4ba8d82dd0085",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-6fd323fe47831c48fc03318f",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-3f87eaf1b9695eeae436df29",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "128229",
+        "memory_id": "fever-train-73837",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-adbcfdbc913691fd2fa1dd48",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-f913a132fd1dda1ffd5a86d7",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-f9a2dd51ed668fa881388493",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "129932",
+        "memory_id": "fever-train-168773",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-7f242332127ddbcee90cdfac",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-ac10ddca33ce24dae0999f1c",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-8512da55a4ef057407ca07fb",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "13079",
+        "memory_id": "fever-train-153403",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-08bc1479169218daae4cafd2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-86dd1b84556ae46dbffd98cf",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-812465b8d2b3a71b473d57c9",
+            "q_use": 1.0,
+            "q_drop": 0.25,
+            "utility": 0.75,
+            "utility_samples": [
+              1.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.75
+      },
+      {
+        "claim_id": "136331",
+        "memory_id": "fever-train-160572",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-10dc787598ee48f78496ef11",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-50c0e17ccf32950f9ff74fa8",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-6f41d099bfb5ba9333e7ccbc",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "137334",
+        "memory_id": "fever-train-142574",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-b08de66e23fc9cc31cad08bf",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-9b4117186a1e6269f03a89fb",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-4dc143f62c40c329acace269",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "141072",
+        "memory_id": "fever-train-51422",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-1e7d21b631780d4afa342c82",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-675b24a273428d88ebddfc0b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-d292424610ec5eb47eba36ea",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "146669",
+        "memory_id": "fever-train-221841",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-09b7c844edbfac67dee07c50",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-b1a893dc3bd184801d9f1bed",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-98b59423e80a42ebbf67d4a2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "148534",
+        "memory_id": "fever-train-179722",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-de99d5f23fde6782d2bceb3a",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-147d11b9079e27bab5a3e6a9",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-f1eb6836dd8141e5d841a3a3",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "150834",
+        "memory_id": "fever-train-48138",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-e9c74fdefedf46f351ab2e82",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-68275c9c9f9e418c77fdb9cf",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-9758be2b92eedafcb0056ef0",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "1544",
+        "memory_id": "fever-train-102049",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c910166ce9227a7687844809",
+            "q_use": 0.5,
+            "q_drop": 0.25,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A2": {
+            "event_id": "fever-0dc325ffa31bef05f8d39c7e",
+            "q_use": 0.5,
+            "q_drop": 0.0,
+            "utility": 0.5,
+            "utility_samples": [
+              1.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-dba27e8ed327a27dded7d46c",
+            "q_use": 0.5,
+            "q_drop": 0.25,
+            "utility": 0.25,
+            "utility_samples": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "positive",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "162885",
+        "memory_id": "fever-train-77905",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c5133440f8ac8a9c028d8144",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-1e2e930ecee2281a01e24c55",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-ae1a9c0e6d0c326f9ce48ed9",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "165663",
+        "memory_id": "fever-train-198473",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-da2ba23d66edd3536dc90f1b",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-e9d483b45ac7eb95e25b331a",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-60c65f1d1d6364fa31584272",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "166651",
+        "memory_id": "fever-train-53142",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-e3acb8890856fe15bd6b8bce",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-5abcccfb56959907e22ebf9e",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-73433d851d4ff1e8e64c410e",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "168530",
+        "memory_id": "fever-train-163288",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-dc7d16804cdb720cdb1a4795",
+            "q_use": 0.5,
+            "q_drop": 0.75,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              -1.0,
+              1.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-9939ca035da166e54afd287a",
+            "q_use": 0.5,
+            "q_drop": 0.75,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              -1.0,
+              1.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-bb3a97fa8b30fd85f312e760",
+            "q_use": 0.5,
+            "q_drop": 1.0,
+            "utility": -0.5,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "negative",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "173138",
+        "memory_id": "fever-train-226903",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-f5e6a67f305c978857cb528d",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-8557e5b32dbc18c37ddf212f",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-16b0d58be17f606abf612e5b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "173719",
+        "memory_id": "fever-train-198119",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-0b0f9f3167cf156c3988c2e4",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-a3cc23caed2bee243e38ea02",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-970ee3f994ee666c14ea1089",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "174580",
+        "memory_id": "fever-train-212599",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c4f7d4abc28bfce362383de2",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A2": {
+            "event_id": "fever-81b95e5cbbd68dd203603ea6",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-aea4e031b1d0968328948edb",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "positive",
+          "A2": "neutral",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "178168",
+        "memory_id": "fever-train-216051",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c75c82b2aaac5dcf10a685c1",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-220c210c3e70b1e92eac65df",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-8c9b0d32b135cc01917e732b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "181205",
+        "memory_id": "fever-train-182570",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-e90a718655615a26d58dc4c7",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A2": {
+            "event_id": "fever-447649bbb4ef77f6dfe550e2",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-16c71add5e189d5b647c11d7",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "positive",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "181624",
+        "memory_id": "fever-train-120255",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c757f63e9004e05e43eab98b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-04bc6794049195888851c3df",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-6b6e8d0558b1d52bdc4deba7",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "181871",
+        "memory_id": "fever-train-114353",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-8c3e8842e8347604b19ef3b1",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-884aa99d5200721e24343d89",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-916002df77ee3711b04ad3c5",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "183619",
+        "memory_id": "fever-train-148145",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-661dfb538b987d2e6ab5e2d2",
+            "q_use": 0.0,
+            "q_drop": 0.25,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-421fa62f888dc6b505abdac0",
+            "q_use": 0.0,
+            "q_drop": 0.5,
+            "utility": -0.5,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              -1.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-c3defb1d2a06143c567b1679",
+            "q_use": 0.0,
+            "q_drop": 0.5,
+            "utility": -0.5,
+            "utility_samples": [
+              -1.0,
+              0.0,
+              0.0,
+              -1.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "negative",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "185228",
+        "memory_id": "fever-train-81387",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-48c8670b489a8dc047e8a54a",
+            "q_use": 0.25,
+            "q_drop": 0.25,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-3da179e444600797f83d86ab",
+            "q_use": 0.25,
+            "q_drop": 0.25,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-ef9d2971c907d2b0a9010339",
+            "q_use": 0.25,
+            "q_drop": 0.5,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "186590",
+        "memory_id": "fever-train-226081",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-82337ed89ee002bf9c7484d0",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-0a15909c69f9c076eb4ddcc3",
+            "q_use": 0.0,
+            "q_drop": 0.25,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              -1.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-71922e728863b0b509d43df7",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "negative",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "186876",
+        "memory_id": "fever-train-49625",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-cbf979e07f18f819cbcb2410",
+            "q_use": 0.5,
+            "q_drop": 0.75,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-6599998607dfbd9dbc69e804",
+            "q_use": 0.5,
+            "q_drop": 0.25,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-203a3a57724b7a078344c69e",
+            "q_use": 0.5,
+            "q_drop": 0.25,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": true,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "189436",
+        "memory_id": "fever-train-140521",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-b4a749d1e95768b81f5b9420",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-fdbcf2b10681deee9894f32f",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-b2c5f7db9ce12c7000692405",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "195020",
+        "memory_id": "fever-train-200504",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-2ef7fa62462e2133ada84434",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-bce3a244d3e3ce2e95777bd7",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-2c3230616cdf7df4d237174c",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "195031",
+        "memory_id": "fever-train-158862",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-2fafe3b7fbb69ec7e21563f4",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-7d95d29edb411ec473b23aef",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-3e69812dd66e4aaa8df7efce",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "195038",
+        "memory_id": "fever-train-219631",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-4cf1e0bbfffb18a232f317f2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-357f4441b3a62629e3edd1d9",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-33c4969fc62740668246f192",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "199413",
+        "memory_id": "fever-train-198119",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-9c652d2102c905280a114f84",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-4caafc5090e5cd3671257ef7",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-6c7cb9af0a9230d9edcae891",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "199750",
+        "memory_id": "fever-train-169465",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-bfcdc82ca983171cce16a563",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-804fe6b9f5322054eb49ac8d",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-85918bcb745664677c18c1c0",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "200387",
+        "memory_id": "fever-train-97793",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-3d9a59a685df7312d11835a0",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-ab770fd49a7b5acbe4d9548b",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-60d46765677d15bc47843a7c",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "203008",
+        "memory_id": "fever-train-198104",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-701beb39470f1204feb4e82c",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-59e34f1a8d341677f55f0c94",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              -1.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-cfd987401cd2058872dc5a47",
+            "q_use": 0.75,
+            "q_drop": 0.25,
+            "utility": 0.5,
+            "utility_samples": [
+              0.0,
+              1.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "203701",
+        "memory_id": "fever-train-131517",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-9d1214cde60989dab84a53de",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-4b50ca3d7d6a82cd6d269b9f",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-01f8ef303cf392eafa090a53",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "204341",
+        "memory_id": "fever-train-30197",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-d582f95f1e60eea5ab2d5b37",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-a623225c4cd41cf22d95c2cc",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-d90ab29484c173bb8dd870ce",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "204342",
+        "memory_id": "fever-train-30197",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-1e2d486f363ff24c34e39b5a",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-7cb3bceb4037d9e3204bbe15",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-d82013f38521bc0064758565",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "206174",
+        "memory_id": "fever-train-47853",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-66ad277f9a1d3cba22bd58c5",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-d6885e9a0db19678885d3133",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-2ed34ef647b86aca7fa1560d",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "206737",
+        "memory_id": "fever-train-65342",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-17226bff5575164b86c62bfe",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-625f02cfd9ac164b00a6130e",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-d8fb6e10ae328c008c345aa2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "207252",
+        "memory_id": "fever-train-118265",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-a2e78c3e1127ae561d1d1fe9",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-9faa8e39a0d313f0f7993edc",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-21d23fc0aa124e0baf45a705",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "208150",
+        "memory_id": "fever-train-217428",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-1b0f54011d81ae285eb6cc18",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-7d3a8abc6eef24575b024303",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-491d92dea844b01f4c04d5b8",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "209872",
+        "memory_id": "fever-train-190903",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-a3ff4229d7336ba0b9b96909",
+            "q_use": 0.25,
+            "q_drop": 1.0,
+            "utility": -0.75,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              -1.0,
+              -1.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-9ff53dfee9ddb63d2b9816d8",
+            "q_use": 0.25,
+            "q_drop": 0.5,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-65240f218e8a586462a1d22f",
+            "q_use": 0.25,
+            "q_drop": 0.75,
+            "utility": -0.5,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "negative",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "21145",
+        "memory_id": "fever-train-5847",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-8a2c85c824b2b677c7181632",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-97361f4d0a0849ecf938409e",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-7c73f684d508d2b06543ceea",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "212321",
+        "memory_id": "fever-train-2765",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-05e43e5c918afbce18d0f789",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-5ad5c5460d27a4d374e782f2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-8e9f419484d5f70a313e1949",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "221085",
+        "memory_id": "fever-train-20978",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-16b58597dc45b6202170e2ca",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-731ccee6be3de0ac2edea219",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-6414c4af7b4574ac5e28951e",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "226871",
+        "memory_id": "fever-train-32403",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-0bb12529aec07a168a39de82",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-1a21592834a1a6b4864fc263",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-e6d1d7573ba146e5c1edf743",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "227135",
+        "memory_id": "fever-train-47032",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-74463f9c0185aea5fa6f4d2c",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-7a08724aa1b06ba5c649fe76",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-ae4edfaa707d1feb1be3a795",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "negative",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "229319",
+        "memory_id": "fever-train-199128",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-2ccd9ed343818e0b289d8e66",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-31d9dd5fadbc03a6f2b35b0d",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-54af2e67de678f58187db8d9",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "23885",
+        "memory_id": "fever-train-209237",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-cf6f9de4ab0396f7e361bb35",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-c879682e928d71e5f1c9f6e9",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-0df6ca9a8fd5c1cb3375dbb3",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "24767",
+        "memory_id": "fever-train-48646",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c62467a7262620bec4d2a6e0",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-46b527de58bf583a28b55480",
+            "q_use": 0.75,
+            "q_drop": 0.5,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-63984cef87c253894d84dab8",
+            "q_use": 0.75,
+            "q_drop": 0.5,
+            "utility": 0.25,
+            "utility_samples": [
+              1.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "26132",
+        "memory_id": "fever-train-62870",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-0f175aa2f004d163390ed36d",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-49bc340bb816f1e1f0c7c70b",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-edbba03100caa49ae9b4e231",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "neutral",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "26300",
+        "memory_id": "fever-train-168557",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-38160d740f4d2662d149679a",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-90474764a4a510cd5b552dff",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-20627f14fdcb226bd91f1208",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "28864",
+        "memory_id": "fever-train-76264",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-d9c296cd940ad69a46f2a84b",
+            "q_use": 0.75,
+            "q_drop": 0.5,
+            "utility": 0.25,
+            "utility_samples": [
+              -1.0,
+              1.0,
+              0.0,
+              1.0
+            ],
+            "sign": "positive"
+          },
+          "A2": {
+            "event_id": "fever-d4d2851910fc60e973b77592",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              -1.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-617897e6bd710e73681621de",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "positive",
+          "A2": "neutral",
+          "A3": "negative"
+        },
+        "direct_sign_flip": true,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "32820",
+        "memory_id": "fever-train-136052",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-0c1e1676ca5781d8febc99d6",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-932e7defa0bfcaff7ac876dd",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-fee3993cb0adad02bd432e0a",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "34774",
+        "memory_id": "fever-train-43441",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-338e3c174d92307b23092012",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-3d6b720e7c1b08b028bb349f",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-073f477ef6ec4bd3a8075bbc",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "39897",
+        "memory_id": "fever-train-217401",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-6bfc505536e7572f19eb7b04",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-17ddf0517b875b25db67155f",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              1.0,
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-16b0cd9c759f1cc7e24f300b",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "neutral",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "42165",
+        "memory_id": "fever-train-67972",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-1c78605df21934e06e2312a2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-507d3d2ffaea33a7571a0e49",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-c419dab3171fe65b0f6fe95b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "4529",
+        "memory_id": "fever-train-112175",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-7f2c17fc5bbc61404bcd72db",
+            "q_use": 0.25,
+            "q_drop": 0.0,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A2": {
+            "event_id": "fever-6dc09b450e6e70d4802de7d9",
+            "q_use": 0.25,
+            "q_drop": 0.0,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-959c847d7e719bc0fe45169f",
+            "q_use": 0.25,
+            "q_drop": 0.25,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "positive",
+          "A2": "positive",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "50121",
+        "memory_id": "fever-train-96896",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-fb8a9f30b3c8d7b351351870",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-312117a1c01cdf695334ed68",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-cc9154ddb28f1ec854651c60",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "5454",
+        "memory_id": "fever-train-154510",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-800821777dee1e5b4f9702b2",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-e44472db9758eed8f5a2be4a",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-16a50df3a33b73f6c6b3686b",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "55976",
+        "memory_id": "fever-train-220539",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-c84e9b1d45b5c9aedf6a206c",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-a21cee804753c52f028f7f80",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-f598703cdcaa744511ded561",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "56323",
+        "memory_id": "fever-train-220086",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-de72e0a07c6ca98617af9894",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-b2b155de77605b02d81e2a86",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-a8218396e1eab502f1ca6012",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "56361",
+        "memory_id": "fever-train-182122",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-40f8e2e5b2357b87e7e5a0ba",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-7f0512170b4f12fed0431638",
+            "q_use": 0.75,
+            "q_drop": 0.5,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-daf85dcfdfeccb977132acc1",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "negative"
+        },
+        "direct_sign_flip": true,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "64440",
+        "memory_id": "fever-train-201140",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-10f9d075ca88fb6ed75cd3fe",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-26f53085a977c0fa836f992c",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-9bf4997366ec3bb4b3004e43",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "68502",
+        "memory_id": "fever-train-223115",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-2279d825a8fd25dc09c4e461",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-9fabd96240c14c6428a6bdc3",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-09b6f4a205f272d7bea85e25",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "69612",
+        "memory_id": "fever-train-136312",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-41b3172db849776af397cf02",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-1a10d0ca4f239bb5fd15b0fc",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-79aef000675ccde49223607d",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "positive"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "81499",
+        "memory_id": "fever-train-186229",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-63ce98a259accb91462a9d61",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-ff25a057fce810d2351f9854",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-067d0956aafd59342b28fad0",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "negative",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "83197",
+        "memory_id": "fever-train-211510",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-7dddecaba5cb4428e985eaca",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-614abbdea642da6fdcca8d46",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-3a921fcedab66fa5d6d308bf",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "negative",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "86116",
+        "memory_id": "fever-train-64806",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-f521c82abade94e3a735723d",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A2": {
+            "event_id": "fever-6657b9c2bc71d1a496b269e1",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-1bfd159eb222038b2a8f6c8f",
+            "q_use": 0.75,
+            "q_drop": 0.5,
+            "utility": 0.25,
+            "utility_samples": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "negative",
+          "A2": "neutral",
+          "A3": "positive"
+        },
+        "direct_sign_flip": true,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.5
+      },
+      {
+        "claim_id": "89544",
+        "memory_id": "fever-train-209237",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-fac285de86f4f206540907fe",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-3553256705230bf8573ceeaa",
+            "q_use": 1.0,
+            "q_drop": 0.75,
+            "utility": 0.25,
+            "utility_samples": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "positive"
+          },
+          "A3": {
+            "event_id": "fever-08c4bc9f0719bfa135338c5d",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "positive",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "90589",
+        "memory_id": "fever-train-22175",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-b4bfd8c55835166083bc7327",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-ed043d144d2d84d8767a3ef0",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-b9f4e7340831454dc3ebf6b5",
+            "q_use": 1.0,
+            "q_drop": 1.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "91414",
+        "memory_id": "fever-train-161654",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-caee7afbb28d5dc155e0a93c",
+            "q_use": 0.75,
+            "q_drop": 0.75,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-6b885ba718ec76399ccb122c",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          },
+          "A3": {
+            "event_id": "fever-0a209847273ffe3c29389f18",
+            "q_use": 0.75,
+            "q_drop": 1.0,
+            "utility": -0.25,
+            "utility_samples": [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "sign": "negative"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "negative",
+          "A3": "negative"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": true,
+        "utility_range": 0.25
+      },
+      {
+        "claim_id": "97017",
+        "memory_id": "fever-train-33397",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-8c962d9ed2605c6777737649",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-e541db016bb9ff240eebb447",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-1418e5d2350b481160cde340",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "9735",
+        "memory_id": "fever-train-214861",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-54c23df7fbfde87dc24dac72",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-ce210ca9f495911cf9600cd4",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-0313c27196651d03f6e7958b",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      },
+      {
+        "claim_id": "99800",
+        "memory_id": "fever-train-64033",
+        "repeat_count": 4,
+        "memory_observation_count": 3,
+        "recipients": {
+          "A1": {
+            "event_id": "fever-f3009101e75a1360b8fb5ee9",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A2": {
+            "event_id": "fever-5cc772443af03af86604f1b7",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          },
+          "A3": {
+            "event_id": "fever-b05b1d5ee0ca570406d93170",
+            "q_use": 0.0,
+            "q_drop": 0.0,
+            "utility": 0.0,
+            "utility_samples": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "sign": "neutral"
+          }
+        },
+        "recipient_sign_vector": {
+          "A1": "neutral",
+          "A2": "neutral",
+          "A3": "neutral"
+        },
+        "direct_sign_flip": false,
+        "any_sign_heterogeneity": false,
+        "utility_range": 0.0
+      }
+    ]
+  },
+  "previous_results": null,
+  "previous_run": null,
+  "independent_retest": null
+}

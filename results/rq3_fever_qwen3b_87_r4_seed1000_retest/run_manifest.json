@@ -1,0 +1,54 @@
+{
+  "runner_schema": "causal-memory-control-fever-v1",
+  "design_hash": "ea9c136fafea27f0520bb98f82a6bd1a59fdb3ef8bc03174b5307cc97402c0f9",
+  "run_hash": "5bc656940d87839ab460a9836ea7573b5410aa2daab323417cc64fd614731923",
+  "design": {
+    "runner_schema": "causal-memory-control-fever-v1",
+    "benchmark": "FEVER_binary",
+    "model": "qwen2.5:3b",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "retrieval_threshold": 0.3,
+    "claims": 87,
+    "repeats": 4,
+    "receivers": [
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "arms": [
+      "drop"
+    ],
+    "selection_seed": 42,
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "test_md5": "9905f4919e1898cd5376a7b7c1a2dcc3",
+    "experience_bank_md5": "aa7cc95850840322375f4b137cd36eb8",
+    "distractor_bank_md5": "77314c8eb2932aada7d1e926633ccf40"
+  },
+  "run": {
+    "runner_schema": "causal-memory-control-fever-v1",
+    "benchmark": "FEVER_binary",
+    "model": "qwen2.5:3b",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "retrieval_threshold": 0.3,
+    "claims": 87,
+    "repeats": 4,
+    "receivers": [
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "arms": [
+      "drop"
+    ],
+    "selection_seed": 42,
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "test_md5": "9905f4919e1898cd5376a7b7c1a2dcc3",
+    "experience_bank_md5": "aa7cc95850840322375f4b137cd36eb8",
+    "distractor_bank_md5": "77314c8eb2932aada7d1e926633ccf40",
+    "endpoint": "http://127.0.0.1:11436/v1",
+    "sample_seed_base": 1000,
+    "cache_seed_from": "/mnt/mydata/hjq/casual-memory/results/cmc_fever_qwen3b_global_87_r4_seed1000_retest/llm_cache.sqlite"
+  }
+}
